@@ -17,8 +17,11 @@
 3. **Инициализирован Git-репозиторий**:
    - Выполнен `git init`.
    - Проверен `.gitignore`: секреты (`.env`), артефакты кэша (`__pycache__`) и персональные лиды (`exports/*.csv`, `exports/*.json`) надежно исключены.
-4. **Создан начальный коммит репозитория**:
-   - Все рабочие файлы проекта и Второго Мозга добавлены в коммит `feat: initial commit with adaptive CEFR test, telegram bot, webapp and second brain ecosystem`.
+4. **Создан начальный коммит и выполнен пуш в GitHub**:
+   - Все рабочие файлы проекта и Второго Мозга добавлены в коммит `feat: initial release with adaptive CEFR test, telegram bot, webapp and second brain ecosystem`.
+   - Настроен remote: `https://github.com/madsaomi/english-test.git`.
+   - Ветка `main` успешно отправлена на GitHub (`git push -u origin main`).
+   - На GitHub автоматически запустится CI пайплайн (`.github/workflows/ci.yml`).
 
 ---
 

@@ -1,0 +1,54 @@
+# Environment variables & secrets
+.env
+.env.local
+.env.*.local
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# IDE & Editor configs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.gemini/
+
+# Testing & logs
+.pytest_cache/
+*.log
+
+# Exported sensitive leads
+exports/*.csv
+exports/*.json
+!exports/.gitkeep
+
+# OS specific
+.DS_Store
+Thumbs.db

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>English Level CAT — Адаптивный тест английского языка (CEFR A1–C2)</title>
+  <meta name="description" content="Узнайте свой реальный уровень английского языка (CEFR: A1-C2) с помощью адаптивной системы тестирования CAT за 10-14 вопросов с отправкой в Telegram.">
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Ambient background glow effects -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        <span class="logo-badge">CAT</span>
+        <span class="logo-text">Lingua<span>Adaptive</span></span>
+      </div>
+      <div class="header-status" id="header-status">
+        <span class="status-dot"></span>
+        <span id="header-status-text">AI Adaptive Engine</span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- SCREEN 1: WELCOME SCREEN -->
+      <section class="screen active" id="screen-welcome">
+        <div class="hero-card">
+          <div class="hero-pill">
+            <span class="sparkle-icon">✨</span>
+            <span>Компьютерное адаптивное тестирование (CEFR)</span>
+          </div>
+          
+          <h1 class="hero-title">Узнайте свой <span class="gradient-text">настоящий уровень</span> английского</h1>
+          <p class="hero-subtitle">
+            Система подбирает сложность каждого вопроса под ваши ответы: легче при ошибках, сложнее при успехе. 
+            Всего <strong>10–14 вопросов</strong> вместо скучных тестов на 50 заданий.
+          </p>
+
+          <div class="features-grid">
+            <div class="feature-item">
+              <div class="feature-icon">🎯</div>
+              <div class="feature-body">
+                <h3>Точная шкала CEFR</h3>
+                <p>Определение от A1 до C2 с разбором грамматики и лексики</p>
+              </div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">⚡</div>
+              <div class="feature-body">
+                <h3>Умный CAT-алгоритм</h3>
+                <p>Сложность каждого вопроса подстраивается динамически</p>
+              </div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">📱</div>
+              <div class="feature-body">
+                <h3>Telegram интеграция</h3>
+                <p>Результаты и персональные советы отправляются прямо в бота</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-wrap">
+            <button class="btn btn-primary btn-large" id="btn-start-test">
+              <span>Пройти адаптивный тест</span>
+              <span class="arrow-icon">→</span>
+            </button>
+            <p class="test-meta-hint">⏱ Занимает ~5-7 минут • Бесплатно и без регистрации</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: QUESTION SCREEN -->
+      <section class="screen" id="screen-question">
+        <div class="test-topbar">
+          <div class="progress-info">
+            <span class="q-number" id="q-counter">Вопрос 1 из ~12</span>
+            <div class="q-level-badge" id="q-level-badge">
+              <span class="badge-dot"></span>
+              <span id="current-eval-label">B1 (Intermediate)</span>
+            </div>
+          </div>
+          <div class="timer-badge" id="timer-badge">
+            <span class="timer-icon">⏱</span>
+            <span id="timer-text">00:30</span>
+          </div>
+        </div>
+
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="progress-fill" style="width: 8%;"></div>
+        </div>
+
+        <div class="question-card" id="question-card">
+          <div class="question-meta">
+            <span class="category-tag" id="q-category">Grammar</span>
+            <span class="topic-pill" id="q-topic">Conditionals</span>
+          </div>
+
+          <h2 class="question-text" id="q-text">Loading question...</h2>
+
+          <div class="options-grid" id="options-container">
+            <!-- Options populated by JS -->
+          </div>
+
+          <div class="card-footer-tip">
+            <span>💡 Подсказка: Выберите один наиболее подходящий вариант ответа</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: RESULT SCREEN -->
+      <section class="screen" id="screen-result">
+        <div class="result-card">
+          <div class="result-celebration-badge">🎯 Тестирование успешно завершено</div>
+          
+          <div class="result-header">
+            <div class="cefr-badge-large" id="result-cefr-badge">
+              <span class="cefr-code" id="result-cefr-code">B2</span>
+              <span class="cefr-level-tag">Уровень CEFR</span>
+            </div>
+            <div class="result-header-text">
+              <h2 class="result-title" id="result-level-title">Upper-Intermediate</h2>
+              <p class="result-summary" id="result-summary-text">
+                Вы свободно понимаете сложные тексты и можете спонтанно общаться с носителями языка.
+              </p>
+              <div class="score-pill-row">
+                <span class="score-pill">🏆 Балл: <strong id="result-score">78</strong>/100</span>
+                <span class="score-pill">🎯 Точность: <strong id="result-accuracy">85%</strong></span>
+                <span class="score-pill">⏱ Время: <strong id="result-time">5 мин 40 сек</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Skills breakdown -->
+          <div class="section-title-wrap">
+            <h3>📊 Детализация по навыкам</h3>
+          </div>
+          <div class="skills-grid" id="skills-container">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Weak topics -->
+          <div class="weak-topics-box" id="weak-topics-box">
+            <h4>⚠️ Темы, где были допущены неточности:</h4>
+            <div class="weak-tags" id="weak-tags-container">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Recommendations -->
+          <div class="recommendations-box">
+            <h4>💡 Индивидуальные рекомендации:</h4>
+            <ul class="recommendations-list" id="recommendations-list">
+              <!-- Populated by JS -->
+            </ul>
+          </div>
+
+          <!-- Telegram notification form -->
+          <div class="telegram-action-box">
+            <div class="tg-box-header">
+              <div class="tg-icon-badge">📱</div>
+              <div>
+                <h3>Отправить полный отчет в Telegram</h3>
+                <p>Получите разбор ошибок, советы и сохраните сертификат в Telegram-боте</p>
+              </div>
+            </div>
+
+            <form id="tg-submit-form" class="tg-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="input-user-name">Ваше имя *</label>
+                  <input type="text" id="input-user-name" placeholder="Например: Иван" required>
+                </div>
+                <div class="form-group">
+                  <label for="input-user-phone">Телефон / WhatsApp</label>
+                  <input type="tel" id="input-user-phone" placeholder="+7 (999) 000-00-00">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="input-user-tg">Ваш Telegram (@username)</label>
+                <input type="text" id="input-user-tg" placeholder="@username">
+              </div>
+
+              <button type="submit" class="btn btn-telegram btn-large" id="btn-send-tg">
+                <span class="tg-btn-icon">✈️</span>
+                <span>Отправить результат в Telegram</span>
+              </button>
+            </form>
+
+            <div class="tg-success-message hidden" id="tg-success-message">
+              <div class="success-icon">✅</div>
+              <div class="success-text">
+                <h4>Результат успешно отправлен в Telegram!</h4>
+                <p>Проверьте сообщения от бота или ожидайте обратной связи преподавателя.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="restart-wrap">
+            <button class="btn btn-secondary" id="btn-restart-test">🔄 Пройти тест заново</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>© 2026 LinguaAdaptive • Computerized Adaptive Testing System</p>
+    </footer>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

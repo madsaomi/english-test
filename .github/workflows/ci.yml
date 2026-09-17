@@ -1,0 +1,43 @@
+name: English CAT Platform CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  test:
+    name: Run Tests & Integrity Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: "pip"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: 🧠 Check Second Brain & Questions Integrity
+      run: |
+        python agents/tools/check_integrity.py
+
+    - name: 🎯 Run CAT Simulation Tests
+      run: |
+        python -m backend.test_simulation
+
+    - name: 🚀 Run End-to-End API Tests
+      run: |
+        # Запуск сервера в фоне
+        python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 &
+        sleep 3
+        # Прогон тестов API
+        python -m backend.test_e2e

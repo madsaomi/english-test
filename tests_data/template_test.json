@@ -1,0 +1,35 @@
+{
+  "_comment": "ШАБЛОН ДЛЯ СОЗДАНИЯ ТЕСТОВ. Скопируйте этот файл, переименуйте в my_test_name.json и заполните своими вопросами. Все файлы *.json в папке tests_data/ автоматически загружаются сайтом!",
+  "id": "my_custom_test_id",
+  "title": "Название вашего теста (например: Экспресс-тест по временам)",
+  "description": "Краткое описание теста для студента: какие темы проверяются и кому подходит.",
+  "category": "Grammar",
+  "level": "A2-B1",
+  "mode": "fixed",
+  "icon": "⚡",
+  "estimated_time_minutes": 7,
+  "questions": [
+    {
+      "id": "sample_q01",
+      "level": "A2",
+      "difficulty": 2.2,
+      "category": "Grammar",
+      "topic": "Past Simple",
+      "text": "Yesterday, we ___ to the cinema and watched a great film.",
+      "options": ["go", "went", "gone", "was going"],
+      "correct_option": 1,
+      "explanation": "Для выражения завершенного действия в прошлом (Yesterday) используется форма Past Simple неправильного глагола go — 'went'."
+    },
+    {
+      "id": "sample_q02",
+      "level": "B1",
+      "difficulty": 3.0,
+      "category": "Vocabulary",
+      "topic": "Travel & Holidays",
+      "text": "Don't forget to ___ your luggage before going to the airport gate.",
+      "options": ["check in", "take off", "look after", "give up"],
+      "correct_option": 0,
+      "explanation": "Фразовый глагол 'check in' означает зарегистрировать багаж на рейс."
+    }
+  ]
+}

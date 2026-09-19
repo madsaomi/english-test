@@ -42,6 +42,20 @@ class SkillBreakdown(BaseModel):
     total_answered: int
     correct_answered: int
 
+class QuestionReviewItem(BaseModel):
+    question_number: int
+    id: str
+    level: str
+    category: str
+    topic: str
+    text: str
+    options: List[str]
+    selected_option: int
+    correct_option: int
+    is_correct: bool
+    explanation: str
+    time_spent_seconds: float
+
 class TestResult(BaseModel):
     session_id: str
     cefr_level: str  # A1, A2, B1, B2, C1, C2
@@ -54,8 +68,28 @@ class TestResult(BaseModel):
     skills: List[SkillBreakdown]
     weak_topics: List[str]
     recommendations: List[str]
+    review: List[QuestionReviewItem] = []
     telegram_sent: bool = False
+
+class TestSuiteMeta(BaseModel):
+    id: str
+    title: str
+    description: str
+    category: str
+    level: str
+    mode: str = "fixed"  # "adaptive" or "fixed"
+    icon: str = "📝"
+    estimated_time_minutes: int = 5
+    total_questions: int = 0
+
+class TestSuite(TestSuiteMeta):
+    questions: List[Question] = []
+
+class StartTestRequest(BaseModel):
+    test_id: Optional[str] = "cefr_adaptive"
 
 class StartTestResponse(BaseModel):
     session_id: str
     first_question: ClientQuestion
+    test_title: Optional[str] = None
+    test_mode: Optional[str] = "adaptive"

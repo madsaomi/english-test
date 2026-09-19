@@ -1,0 +1,100 @@
+{
+  "id": "test_grammar_master",
+  "title": "Grammar Master Intensive",
+  "description": "Тематический тест по ключевым правилам грамматики: времена, пассивный залог, модальные глаголы и Conditionals.",
+  "category": "Grammar",
+  "level": "A2-B2",
+  "mode": "fixed",
+  "icon": "⚡",
+  "estimated_time_minutes": 6,
+  "questions": [
+    {
+      "id": "gm_01",
+      "level": "A2",
+      "difficulty": 2.0,
+      "category": "Grammar",
+      "topic": "Past Simple vs Present Perfect",
+      "text": "I ___ to London three times, but I have never visited Scotland.",
+      "options": ["have been", "was", "went", "am being"],
+      "correct_option": 0,
+      "explanation": "Для выражения жизненного опыта без указания конкретного времени в прошлом используется Present Perfect ('have been')."
+    },
+    {
+      "id": "gm_02",
+      "level": "A2",
+      "difficulty": 2.3,
+      "category": "Grammar",
+      "topic": "Comparatives",
+      "text": "Travelling by train is usually ___ than travelling by bus in Europe.",
+      "options": ["more comfortable", "most comfortable", "as comfortable", "comfortabler"],
+      "correct_option": 0,
+      "explanation": "Для многосложных прилагательных сравнительная степень образуется с помощью слова 'more' + прилагательное."
+    },
+    {
+      "id": "gm_03",
+      "level": "B1",
+      "difficulty": 3.0,
+      "category": "Grammar",
+      "topic": "Passive Voice",
+      "text": "The new shopping center ___ by the city mayor yesterday morning.",
+      "options": ["opened", "was opened", "is opened", "has opened"],
+      "correct_option": 1,
+      "explanation": "Действие совершено над объектом в конкретный момент в прошлом ('yesterday morning'), поэтому используется Past Simple Passive: 'was opened'."
+    },
+    {
+      "id": "gm_04",
+      "level": "B1",
+      "difficulty": 3.2,
+      "category": "Grammar",
+      "topic": "First Conditional",
+      "text": "If it ___ heavily tomorrow, the outdoor match will be postponed.",
+      "options": ["will rain", "rains", "rained", "is raining"],
+      "correct_option": 1,
+      "explanation": "В придаточных предложениях условия (после 'if') в First Conditional используется Present Simple ('rains'), а не будущее время."
+    },
+    {
+      "id": "gm_05",
+      "level": "B1",
+      "difficulty": 3.4,
+      "category": "Grammar",
+      "topic": "Modal Verbs of Obligation",
+      "text": "You ___ wear a seatbelt while driving; it is strictly required by law.",
+      "options": ["must", "might", "could", "would"],
+      "correct_option": 0,
+      "explanation": "Глагол 'must' выражает строгое обязательство или требование закона."
+    },
+    {
+      "id": "gm_06",
+      "level": "B2",
+      "difficulty": 3.8,
+      "category": "Grammar",
+      "topic": "Second Conditional",
+      "text": "If I ___ more spare time, I would learn how to play the piano.",
+      "options": ["have", "had", "would have", "had had"],
+      "correct_option": 1,
+      "explanation": "В гипотетическом условии (Second Conditional) в придаточной части используется Past Simple ('had'), а в главной — 'would + V'."
+    },
+    {
+      "id": "gm_07",
+      "level": "B2",
+      "difficulty": 4.1,
+      "category": "Grammar",
+      "topic": "Past Perfect",
+      "text": "By the time the rescue team arrived, the hikers ___ already built a shelter.",
+      "options": ["have", "had", "did", "were"],
+      "correct_option": 1,
+      "explanation": "Для действия, которое произошло раньше другого действия в прошлом, используется Past Perfect ('had built')."
+    },
+    {
+      "id": "gm_08",
+      "level": "B2",
+      "difficulty": 4.4,
+      "category": "Grammar",
+      "topic": "Mixed & Third Conditional",
+      "text": "If we had taken a taxi instead of the bus, we ___ the flight.",
+      "options": ["would not miss", "would not have missed", "had not missed", "will not miss"],
+      "correct_option": 1,
+      "explanation": "В Third Conditional (нереальное событие в прошлом) в главной части используется 'would have + V3'."
+    }
+  ]
+}

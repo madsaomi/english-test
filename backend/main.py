@@ -7,15 +7,19 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from typing import List, Optional
 from .config import HOST, PORT, IS_BOT_ENABLED, BOT_TOKEN, ADMIN_CHAT_ID, WEBAPP_URL
 from .models import (
+    StartTestRequest,
     StartTestResponse,
     AnswerSubmission,
     UserContactSubmission,
     TestResult,
-    ClientQuestion
+    ClientQuestion,
+    TestSuiteMeta
 )
 from .cat_engine import cat_engine
+from .test_loader import test_repository
 from .telegram_bot import bot, dp, send_result_notifications
 
 logging.basicConfig(
@@ -81,17 +85,25 @@ async def health_check():
         "total_questions_in_bank": len(cat_engine.sessions)
     }
 
+@app.get("/api/tests", response_model=List[TestSuiteMeta])
+async def list_available_tests():
+    return test_repository.get_all_tests_meta()
+
 @app.post("/api/test/start", response_model=StartTestResponse)
-async def start_test():
-    session = cat_engine.create_session()
+async def start_test(payload: Optional[StartTestRequest] = None):
+    test_id = payload.test_id if payload and payload.test_id else "cefr_adaptive"
+    session = cat_engine.create_session(test_id=test_id)
     first_q = cat_engine.select_next_question(session)
     if not first_q:
         raise HTTPException(status_code=500, detail="Ошибка банка вопросов")
     
     client_q = cat_engine.to_client_question(session, first_q)
-    return StartTestResponse(session_id=session.session_id, first_question=client_q)
-
-from typing import Optional
+    return StartTestResponse(
+        session_id=session.session_id,
+        first_question=client_q,
+        test_title=session.test_title,
+        test_mode=session.test_mode
+    )
 
 class AnswerResponse(BaseModel):
     is_finished: bool

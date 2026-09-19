@@ -1,0 +1,100 @@
+{
+  "id": "test_business_english",
+  "title": "Business & Formal English",
+  "description": "Тест по деловому английскому: деловая переписка, переговоры, корпоративная лексика и профессиональный этикет.",
+  "category": "Business",
+  "level": "B2-C1",
+  "mode": "fixed",
+  "icon": "💼",
+  "estimated_time_minutes": 6,
+  "questions": [
+    {
+      "id": "biz_01",
+      "level": "B2",
+      "difficulty": 3.6,
+      "category": "Usage",
+      "topic": "Formal Correspondence",
+      "text": "I am writing to ___ whether your company would be interested in a partnership.",
+      "options": ["inquire", "ask up", "check over", "wonder about"],
+      "correct_option": 0,
+      "explanation": "В формальной деловой переписке для запроса информации используется глагол 'inquire'."
+    },
+    {
+      "id": "biz_02",
+      "level": "B2",
+      "difficulty": 3.9,
+      "category": "Vocabulary",
+      "topic": "Meetings & Agendas",
+      "text": "Due to unexpected schedule conflicts, we have to ___ the quarterly board meeting until next Friday.",
+      "options": ["postpone", "cancel out", "stand down", "pull over"],
+      "correct_option": 0,
+      "explanation": "'Postpone' означает перенести встречу на более поздний срок."
+    },
+    {
+      "id": "biz_03",
+      "level": "B2",
+      "difficulty": 4.0,
+      "category": "Vocabulary",
+      "topic": "Finance & Budgets",
+      "text": "The marketing department managed to cut costs and increase our profit ___ by 12%.",
+      "options": ["margin", "border", "edge", "limit"],
+      "correct_option": 0,
+      "explanation": "Устойчивый финансовый термин: 'profit margin' (маржа прибыли / рентабельность)."
+    },
+    {
+      "id": "biz_04",
+      "level": "B2",
+      "difficulty": 4.2,
+      "category": "Grammar",
+      "topic": "Diplomatic Language",
+      "text": "It ___ appear that there has been a slight misunderstanding regarding the delivery date.",
+      "options": ["would", "must", "should", "will"],
+      "correct_option": 0,
+      "explanation": "Конструкция 'It would appear that...' используется в деловом английском для смягчения критики и вежливого дипломатичного тона."
+    },
+    {
+      "id": "biz_05",
+      "level": "C1",
+      "difficulty": 4.6,
+      "category": "Usage",
+      "topic": "Negotiations & Contracts",
+      "text": "Both parties finally reached a consensus and signed a legally ___ non-disclosure agreement.",
+      "options": ["binding", "holding", "fastening", "sticking"],
+      "correct_option": 0,
+      "explanation": "Юридический и деловой термин: 'legally binding agreement' (юридически обязывающее соглашение)."
+    },
+    {
+      "id": "biz_06",
+      "level": "C1",
+      "difficulty": 4.8,
+      "category": "Vocabulary",
+      "topic": "Corporate Strategy",
+      "text": "To remain competitive, the startup needs to ___ new opportunities in emerging markets.",
+      "options": ["leverage", "press", "force", "drag"],
+      "correct_option": 0,
+      "explanation": "'Leverage' в бизнесе означает эффективно использовать рычаги и ресурсы для извлечения максимальной выгоды."
+    },
+    {
+      "id": "biz_07",
+      "level": "C1",
+      "difficulty": 5.0,
+      "category": "Grammar",
+      "topic": "Formal Inversion",
+      "text": "Should you require any further documentation, please do not ___ to contact our office.",
+      "options": ["hesitate", "doubt", "delay", "pause"],
+      "correct_option": 0,
+      "explanation": "Классическая деловая формула вежливости: 'Please do not hesitate to contact...' с условной инверсией 'Should you require...'"
+    },
+    {
+      "id": "biz_08",
+      "level": "C1",
+      "difficulty": 5.2,
+      "category": "Vocabulary",
+      "topic": "Risk & Compliance",
+      "text": "Failure to comply with international regulations could lead to severe financial ___.",
+      "options": ["penalties", "punishments", "retributions", "disadvantages"],
+      "correct_option": 0,
+      "explanation": "В регуляторном и бизнес-контексте денежные штрафы и санкции называются 'financial penalties'."
+    }
+  ]
+}

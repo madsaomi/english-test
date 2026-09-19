@@ -1,0 +1,100 @@
+{
+  "id": "test_starter_a1_a2",
+  "title": "Starter & Elementary English",
+  "description": "Экспресс-тест для начинающих: базовые фразы, глагол to be, настоящее время и лексика повседневной жизни.",
+  "category": "Starter",
+  "level": "A1-A2",
+  "mode": "fixed",
+  "icon": "🌱",
+  "estimated_time_minutes": 5,
+  "questions": [
+    {
+      "id": "st_01",
+      "level": "A1",
+      "difficulty": 1.0,
+      "category": "Grammar",
+      "topic": "Verb To Be",
+      "text": "Hello, my name ___ Alex and I live in Madrid.",
+      "options": ["is", "am", "are", "be"],
+      "correct_option": 0,
+      "explanation": "Подлежащее 'my name' (оно / it) согласуется с формой глагола to be 'is'."
+    },
+    {
+      "id": "st_02",
+      "level": "A1",
+      "difficulty": 1.2,
+      "category": "Vocabulary",
+      "topic": "Family",
+      "text": "My father's sister is my ___.",
+      "options": ["aunt", "uncle", "cousin", "grandmother"],
+      "correct_option": 0,
+      "explanation": "Сестра отца приходится человеку тетей ('aunt')."
+    },
+    {
+      "id": "st_03",
+      "level": "A1",
+      "difficulty": 1.3,
+      "category": "Grammar",
+      "topic": "Present Simple Questions",
+      "text": "___ you like Italian food and pizza?",
+      "options": ["Do", "Does", "Are", "Is"],
+      "correct_option": 0,
+      "explanation": "Вопрос во времени Present Simple со смысловым глаголом like для местоимения 'you' начинается со вспомогательного глагола 'Do'."
+    },
+    {
+      "id": "st_04",
+      "level": "A1",
+      "difficulty": 1.5,
+      "category": "Usage",
+      "topic": "Telling Time",
+      "text": "— What time is it now?\n— It's half ___ five (5:30).",
+      "options": ["past", "to", "after", "over"],
+      "correct_option": 0,
+      "explanation": "Для обозначения половины шестого в английском языке используется фраза 'half past five'."
+    },
+    {
+      "id": "st_05",
+      "level": "A2",
+      "difficulty": 1.8,
+      "category": "Grammar",
+      "topic": "Past of To Be",
+      "text": "Where ___ you yesterday at seven in the evening?",
+      "options": ["were", "was", "are", "been"],
+      "correct_option": 0,
+      "explanation": "Форма прошедшего времени глагола to be для местоимения 'you' — 'were'."
+    },
+    {
+      "id": "st_06",
+      "level": "A2",
+      "difficulty": 2.0,
+      "category": "Vocabulary",
+      "topic": "Directions & Town",
+      "text": "Go straight on, then turn ___ at the traffic lights.",
+      "options": ["left", "straight", "across", "along"],
+      "correct_option": 0,
+      "explanation": "Устойчивая фраза для указания маршрута: 'turn left' (поверните налево)."
+    },
+    {
+      "id": "st_07",
+      "level": "A2",
+      "difficulty": 2.2,
+      "category": "Grammar",
+      "topic": "Present Continuous",
+      "text": "Listen! The baby ___ in the other room.",
+      "options": ["is sleeping", "sleeps", "slept", "sleeping"],
+      "correct_option": 0,
+      "explanation": "Маркер 'Listen!' указывает на действие, происходящее прямо сейчас в момент речи (Present Continuous: 'is sleeping')."
+    },
+    {
+      "id": "st_08",
+      "level": "A2",
+      "difficulty": 2.4,
+      "category": "Usage",
+      "topic": "Shopping & Prices",
+      "text": "— ___ is this woolen sweater?\n— It costs forty euros.",
+      "options": ["How much", "How many", "How long", "How far"],
+      "correct_option": 0,
+      "explanation": "Для вопроса о стоимости товара всегда используется вопрос 'How much is...?'"
+    }
+  ]
+}

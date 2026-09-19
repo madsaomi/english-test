@@ -2,8 +2,9 @@ import uuid
 import math
 import random
 from typing import Dict, List, Optional, Set
-from .models import Question, ClientQuestion, TestResult, SkillBreakdown
+from .models import Question, ClientQuestion, TestResult, SkillBreakdown, QuestionReviewItem
 from .questions import QUESTION_BANK
+from .test_loader import test_repository
 
 CEFR_LEVELS = [
     (1.0, 1.6, "A1", "A1 (Beginner)", "Начальный уровень владения языком. Понимание базовых фраз, построение простых предложений."),
@@ -22,8 +23,12 @@ def map_ability_to_cefr(ability: float):
     return "C2", "C2 (Mastery / Proficiency)", CEFR_LEVELS[-1][4]
 
 class TestSession:
-    def __init__(self, session_id: str):
+    def __init__(self, session_id: str, test_id: str = "cefr_adaptive"):
         self.session_id: str = session_id
+        self.test_id: str = test_id
+        self.test_title: str = "CEFR Adaptive Test"
+        self.test_mode: str = "adaptive"  # "adaptive" or "fixed"
+        self.curated_questions: List[Question] = []
         self.ability: float = 3.0  # Начинаем со среднего уровня (B1)
         self.streak: int = 0       # Положительный для серии верных, отрицательный для неверных
         self.history: List[dict] = []
@@ -42,9 +47,25 @@ class CATEngine:
     def __init__(self):
         self.sessions: Dict[str, TestSession] = {}
 
-    def create_session(self) -> TestSession:
+    def create_session(self, test_id: str = "cefr_adaptive") -> TestSession:
         session_id = str(uuid.uuid4())
-        session = TestSession(session_id)
+        session = TestSession(session_id, test_id=test_id)
+
+        suite = test_repository.get_test_suite(test_id)
+        if suite:
+            session.test_title = suite.title
+            session.test_mode = suite.mode
+            if suite.mode == "fixed":
+                session.curated_questions = list(suite.questions)
+                session.min_questions = len(suite.questions)
+                session.max_questions = len(suite.questions)
+            else:
+                session.curated_questions = list(suite.questions) if suite.questions else test_repository.get_all_questions_pool()
+                session.min_questions = min(10, len(session.curated_questions))
+                session.max_questions = min(14, len(session.curated_questions))
+        else:
+            session.curated_questions = test_repository.get_all_questions_pool()
+
         self.sessions[session_id] = session
         return session
 
@@ -52,9 +73,24 @@ class CATEngine:
         return self.sessions.get(session_id)
 
     def select_next_question(self, session: TestSession) -> Optional[Question]:
-        available = [q for q in QUESTION_BANK if q.id not in session.asked_question_ids]
-        if not available:
+        if session.test_mode == "fixed":
+            # В фиксированном тесте выдаем вопросы строго по порядку из набора
+            for q in session.curated_questions:
+                if q.id not in session.asked_question_ids:
+                    session.current_question = q
+                    session.asked_question_ids.add(q.id)
+                    return q
             return None
+
+        # В адаптивном режиме подбираем вопрос по CAT-алгоритму
+        pool = session.curated_questions if session.curated_questions else test_repository.get_all_questions_pool()
+        available = [q for q in pool if q.id not in session.asked_question_ids]
+        if not available:
+            # Fallback на полный пул вопросов если вопросы набора исчерпались
+            all_pool = test_repository.get_all_questions_pool()
+            available = [q for q in all_pool if q.id not in session.asked_question_ids]
+            if not available:
+                return None
 
         # Очередность категорий для баланса: Grammar -> Vocabulary -> Usage
         category_order = ["Grammar", "Vocabulary", "Usage"]
@@ -86,8 +122,11 @@ class CATEngine:
 
     def submit_answer(self, session: TestSession, question_id: str, selected_option: int, time_spent: float) -> bool:
         if not session.current_question or session.current_question.id != question_id:
-            # На случай перезагрузки/синхронизации ищем по id
-            q = next((q for q in QUESTION_BANK if q.id == question_id), None)
+            # Поиск в вопросах сессии или общем пуле
+            q = next((item for item in session.curated_questions if item.id == question_id), None)
+            if not q:
+                pool = test_repository.get_all_questions_pool()
+                q = next((item for item in pool if item.id == question_id), None)
             if not q:
                 return False
         else:
@@ -104,8 +143,6 @@ class CATEngine:
                 session.streak += 1
             else:
                 session.streak = 1
-            
-            # Если серия верных ответов, делаем шаг крупнее
             multiplier = 1.0 + min(0.5, (session.streak - 1) * 0.25)
             session.ability += base_step * multiplier
         else:
@@ -113,7 +150,6 @@ class CATEngine:
                 session.streak -= 1
             else:
                 session.streak = -1
-            
             multiplier = 1.0 + min(0.5, (abs(session.streak) - 1) * 0.25)
             session.ability -= base_step * multiplier
 
@@ -131,6 +167,10 @@ class CATEngine:
 
     def should_finish(self, session: TestSession) -> bool:
         count = len(session.history)
+        if session.test_mode == "fixed":
+            # Фиксированный тест завершается строго после ответа на все вопросы
+            return count >= len(session.curated_questions)
+
         if count >= session.max_questions:
             return True
         if count >= session.min_questions:
@@ -143,16 +183,25 @@ class CATEngine:
 
     def finalize_test(self, session: TestSession) -> TestResult:
         session.is_finished = True
-        cefr_code, cefr_title, cefr_desc = map_ability_to_cefr(session.ability)
-
-        # Вычисление баллов по шкале 0..100
-        normalized_score = int(round(((session.ability - 1.0) / 5.0) * 100))
-        normalized_score = max(5, min(99, normalized_score))
-
         correct_count = sum(1 for h in session.history if h["is_correct"])
         total_questions = len(session.history)
         accuracy_pct = int(round((correct_count / total_questions) * 100)) if total_questions > 0 else 0
         total_time = int(round(sum(h.get("time_spent", 0) for h in session.history)))
+
+        if session.test_mode == "fixed" and total_questions > 0:
+            # Для фиксированного теста учитываем среднюю сложность вопросов и процент точности
+            avg_diff = sum(h["difficulty"] for h in session.history) / total_questions
+            # Корректируем уровень: при 100% точности даем верхнюю планку сложности набора
+            score_offset = (accuracy_pct - 50.0) / 100.0 * 1.2
+            final_ability = max(1.0, min(6.0, avg_diff + score_offset))
+            session.ability = final_ability
+            normalized_score = accuracy_pct
+        else:
+            # В адаптивном режиме нормализуем балл по ability
+            normalized_score = int(round(((session.ability - 1.0) / 5.0) * 100))
+            normalized_score = max(5, min(99, normalized_score))
+
+        cefr_code, cefr_title, cefr_desc = map_ability_to_cefr(session.ability)
 
         # Детализация по категориям
         categories = ["Grammar", "Vocabulary", "Usage"]
@@ -165,7 +214,6 @@ class CATEngine:
                 cat_correct = sum(1 for h in cat_items if h["is_correct"])
                 cat_total = len(cat_items)
                 pct = int(round((cat_correct / cat_total) * 100))
-                # Вычисляем среднюю сложность успешных вопросов категории
                 avg_diff = sum(h["difficulty"] for h in cat_items) / cat_total
                 cat_code, _, _ = map_ability_to_cefr(avg_diff)
                 skills_breakdown.append(SkillBreakdown(
@@ -205,6 +253,24 @@ class CATEngine:
             recommendations.append("Изучайте стилистические и идиоматические нюансы академического и бизнес-английского.")
             recommendations.append("Читайте сложную литературу, статьи The Economist / Nature и участвуйте в дебатах.")
 
+        review_items: List[QuestionReviewItem] = []
+        for idx, h in enumerate(session.history, 1):
+            q_obj: Question = h["question"]
+            review_items.append(QuestionReviewItem(
+                question_number=idx,
+                id=q_obj.id,
+                level=q_obj.level,
+                category=q_obj.category,
+                topic=q_obj.topic,
+                text=q_obj.text,
+                options=q_obj.options,
+                selected_option=h["selected_option"],
+                correct_option=q_obj.correct_option,
+                is_correct=h["is_correct"],
+                explanation=q_obj.explanation,
+                time_spent_seconds=round(float(h.get("time_spent", 0.0)), 1)
+            ))
+
         result = TestResult(
             session_id=session.session_id,
             cefr_level=cefr_code,
@@ -217,6 +283,7 @@ class CATEngine:
             skills=skills_breakdown,
             weak_topics=weak_topics[:4],  # Топ-4 слабых темы
             recommendations=recommendations,
+            review=review_items,
             telegram_sent=False
         )
         session.result = result

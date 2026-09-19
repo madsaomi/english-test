@@ -74,12 +74,24 @@
             </div>
           </div>
 
+          <!-- Test Selection Catalog -->
+          <div class="test-catalog-section">
+            <div class="catalog-header">
+              <div class="catalog-badge">📚 Каталог программ</div>
+              <h2 class="catalog-title">Выберите подходящий тест</h2>
+              <p class="catalog-subtitle">Пройдите полный адаптивный срез или сфокусируйтесь на целевой тематике</p>
+            </div>
+            <div class="test-cards-grid" id="test-cards-grid">
+              <!-- Rendered dynamically by JS -->
+            </div>
+          </div>
+
           <div class="action-wrap">
             <button class="btn btn-primary btn-large" id="btn-start-test">
-              <span>Пройти адаптивный тест</span>
+              <span id="btn-start-text">Пройти выбранный тест</span>
               <span class="arrow-icon">→</span>
             </button>
-            <p class="test-meta-hint">⏱ Занимает ~5-7 минут • Бесплатно и без регистрации</p>
+            <p class="test-meta-hint" id="test-meta-hint">⏱ Занимает ~5-7 минут • Бесплатно и без регистрации</p>
           </div>
         </div>
       </section>
@@ -88,6 +100,7 @@
       <section class="screen" id="screen-question">
         <div class="test-topbar">
           <div class="progress-info">
+            <span class="test-suite-tag" id="q-test-title">CEFR Adaptive</span>
             <span class="q-number" id="q-counter">Вопрос 1 из ~12</span>
             <div class="q-level-badge" id="q-level-badge">
               <span class="badge-dot"></span>
@@ -125,7 +138,10 @@
       <!-- SCREEN 3: RESULT SCREEN -->
       <section class="screen" id="screen-result">
         <div class="result-card">
-          <div class="result-celebration-badge">🎯 Тестирование успешно завершено</div>
+          <div class="result-top-badge-row">
+            <span class="result-test-tag" id="result-test-name">CEFR General Adaptive Test</span>
+            <span class="result-celebration-badge">🎯 Тестирование завершено</span>
+          </div>
           
           <div class="result-header">
             <div class="cefr-badge-large" id="result-cefr-badge">
@@ -167,6 +183,25 @@
             <ul class="recommendations-list" id="recommendations-list">
               <!-- Populated by JS -->
             </ul>
+          </div>
+
+          <!-- Detailed Questions Review -->
+          <div class="review-section" id="review-section">
+            <div class="review-header-wrap">
+              <div class="section-title-wrap">
+                <h3>📝 Подробный разбор каждого вопроса</h3>
+                <p class="section-subtitle">Проверьте ваши ответы, верные варианты и детальные правила</p>
+              </div>
+              <div class="review-filter-tabs" id="review-filter-tabs">
+                <button class="review-tab-btn active" data-filter="all">Все вопросы (<span id="review-count-all">0</span>)</button>
+                <button class="review-tab-btn tab-errors" data-filter="wrong">Только ошибки (<span id="review-count-wrong">0</span>)</button>
+                <button class="review-tab-btn tab-correct" data-filter="correct">Только верные (<span id="review-count-correct">0</span>)</button>
+              </div>
+            </div>
+
+            <div class="review-list" id="review-list">
+              <!-- Rendered by JS -->
+            </div>
           </div>
 
           <!-- Telegram notification form -->

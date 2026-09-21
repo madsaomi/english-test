@@ -118,13 +118,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Keyboard navigation for options (A, B, C, D or 1, 2, 3, 4)
+  // Keyboard navigation for options (A, B, C, D or 1, 2, 3, 4).
+  // Используем e.code (физические клавиши), чтобы работало и на русской раскладке.
   window.addEventListener('keydown', (e) => {
     if (!currentQuestion || isAnswering || !screenQuestion.classList.contains('active')) return;
-    const key = e.key.toUpperCase();
-    const map = { '1': 0, '2': 1, '3': 2, '4': 3, 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
-    if (map[key] !== undefined && map[key] < currentQuestion.options.length) {
-      selectOption(map[key]);
+    const codeMap = {
+      'Digit1': 0, 'Digit2': 1, 'Digit3': 2, 'Digit4': 3,
+      'KeyA': 0, 'KeyB': 1, 'KeyC': 2, 'KeyD': 3
+    };
+    const idx = codeMap[e.code];
+    if (idx !== undefined && idx < currentQuestion.options.length) {
+      selectOption(idx);
     }
   });
 
@@ -435,6 +439,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     resultCefrCode.textContent = res.cefr_level;
     resultLevelTitle.textContent = `${res.cefr_level} — ${res.level_title}`;
+    if (resultSummaryText && res.cefr_description) {
+      resultSummaryText.textContent = res.cefr_description;
+    }
     resultScore.textContent = res.score;
     resultAccuracy.textContent = `${res.accuracy_percentage}%`;
 
@@ -659,7 +666,8 @@ document.addEventListener('DOMContentLoaded', () => {
           name: name,
           phone: phone || null,
           telegram_username: tgUsername || null,
-          tg_user_id: tgUser ? tgUser.id : null
+          tg_user_id: tgUser ? tgUser.id : null,
+          tg_init_data: tg ? tg.initData : null
         })
       });
 

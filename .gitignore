@@ -49,6 +49,10 @@ exports/*.csv
 exports/*.json
 !exports/.gitkeep
 
+# Persistent lead & session data
+data/leads.json
+data/sessions.json
+
 # OS specific
 .DS_Store
 Thumbs.db

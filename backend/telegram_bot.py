@@ -99,6 +99,86 @@ def format_result_card(name: str, phone: Optional[str], username: Optional[str],
     )
     return card
 
+def format_compact_lead_card(name: str, level_code: str, level_title: str,
+                             phone: str, received_at: str) -> str:
+    """Компактная карточка заявки для сотрудника (Вариант A)."""
+    return (
+        "🏷 <b>НОВАЯ ЗАЯВКА С ТЕСТА</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━\n"
+        f"👤 <b>Имя:</b> {name}\n"
+        f"🏆 <b>Уровень:</b> {level_code} — {level_title}\n"
+        f"📱 <b>Телефон:</b> <code>{phone}</code>\n"
+        f"📅 <b>Принято:</b> {received_at}\n"
+        "━━━━━━━━━━━━━━━━━━━━━"
+    )
+
+
+async def send_admin_lead_notification(lead) -> bool:
+    """Отправляет сотруднику (ADMIN_CHAT_ID) ДВА сообщения подряд:
+    1) компактная карточка, 2) детальный результат кандидата."""
+    if not IS_BOT_ENABLED or not bot or not ADMIN_CHAT_ID:
+        logger.info(
+            f"[DEMO MODE] Уведомление сотруднику не отправлено (бот/ADMIN_CHAT_ID не настроены): "
+            f"{lead.student_name} -> {lead.result.cefr_level}"
+        )
+        return False
+
+    received_at = lead.received_at.strftime("%d.%m.%Y %H:%M")
+    compact = format_compact_lead_card(
+        name=lead.student_name,
+        level_code=lead.result.cefr_level,
+        level_title=lead.result.level_title,
+        phone=lead.phone,
+        received_at=received_at,
+    )
+    detailed = format_result_card(
+        name=lead.student_name,
+        phone=lead.phone,
+        username=lead.telegram_username,
+        result=lead.result,
+    )
+
+    sent = True
+    try:
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=compact, parse_mode=ParseMode.HTML)
+    except Exception as e:
+        sent = False
+        logger.error(f"Ошибка отправки карточки сотруднику: {e}")
+
+    try:
+        await bot.send_message(
+            chat_id=ADMIN_CHAT_ID,
+            text=f"📊 <b>Детальный результат кандидата «{lead.student_name}»:</b>\n\n{detailed}",
+            parse_mode=ParseMode.HTML
+        )
+        sent = sent and True
+        logger.info(f"Карточка и детали отправлены сотруднику {ADMIN_CHAT_ID}")
+    except Exception as e:
+        sent = False
+        logger.error(f"Ошибка отправки детального результата сотруднику: {e}")
+
+    return sent
+
+
+async def send_student_full_result(name: str, tg_user_id: Optional[int], result: TestResult) -> bool:
+    """Отправляет полную карточку результатов самому кандидату (если известен chat_id)."""
+    if not IS_BOT_ENABLED or not bot or not tg_user_id:
+        return False
+    try:
+        user_msg = (
+            f"🎉 <b>Поздравляем с прохождением теста, {name}!</b>\n\n"
+            f"{format_result_card(name=name, phone=None, username=None, result=result)}\n\n"
+            "💡 <b>Рекомендации преподавателя:</b>\n" +
+            "\n".join([f"✨ {r}" for r in result.recommendations])
+        )
+        await bot.send_message(chat_id=tg_user_id, text=user_msg, parse_mode=ParseMode.HTML)
+        logger.info(f"Отчет успешно отправлен ученику {tg_user_id}")
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка отправки ученику {tg_user_id}: {e}")
+        return False
+
+
 async def send_result_notifications(
     name: str,
     phone: Optional[str],
@@ -106,43 +186,23 @@ async def send_result_notifications(
     tg_user_id: Optional[int],
     result: TestResult
 ) -> bool:
+    """Совместимая обёртка: отправляет уведомление сотруднику и кандидату."""
     if not IS_BOT_ENABLED or not bot:
         logger.info(f"[DEMO MODE] Telegram уведомление не отправлено (бот не настроен в .env): {name} -> {result.cefr_level}")
         return False
 
-    card = format_result_card(name, phone, username, result)
-    sent_any = False
-
-    # 1. Отправка администратору / учителю
+    sent_admin = False
     if ADMIN_CHAT_ID:
         try:
+            card = format_result_card(name, phone, username, result)
             await bot.send_message(
                 chat_id=ADMIN_CHAT_ID,
                 text=f"🔔 <b>НОВАЯ ЗАЯВКА С ТЕСТА!</b>\n\n{card}",
                 parse_mode=ParseMode.HTML
             )
-            sent_any = True
-            logger.info(f"Отчет успешно отправлен администратору {ADMIN_CHAT_ID}")
+            sent_admin = True
         except Exception as e:
             logger.error(f"Ошибка отправки администратору: {e}")
 
-    # 2. Отправка самому ученику (если известен его chat_id)
-    if tg_user_id:
-        try:
-            user_msg = (
-                f"🎉 <b>Поздравляем с прохождением теста, {name}!</b>\n\n"
-                f"{card}\n\n"
-                "💡 <b>Рекомендации преподавателя:</b>\n" +
-                "\n".join([f"✨ {r}" for r in result.recommendations])
-            )
-            await bot.send_message(
-                chat_id=tg_user_id,
-                text=user_msg,
-                parse_mode=ParseMode.HTML
-            )
-            sent_any = True
-            logger.info(f"Отчет успешно отправлен ученику {tg_user_id}")
-        except Exception as e:
-            logger.error(f"Ошибка отправки ученику {tg_user_id}: {e}")
-
-    return sent_any
+    sent_student = await send_student_full_result(name, tg_user_id, result)
+    return sent_admin or sent_student

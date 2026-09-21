@@ -117,6 +117,27 @@ def run_integrity_check():
             errors_count += 1
         log_check("Уникальность ID всех вопросов", unique_ids, "Обнаружены дубликаты ID!")
 
+        # Проверка синхронизации банков: questions.py <-> tests_data/cefr_adaptive_bank.json
+        import json as _json
+        bank_file = BASE_DIR / "tests_data" / "cefr_adaptive_bank.json"
+        if bank_file.exists():
+            try:
+                with open(bank_file, encoding="utf-8") as _f:
+                    _raw = _json.load(_f)
+                json_ids = [q["id"] for q in _raw.get("questions", [])]
+                py_ids = [q.id for q in QUESTION_BANK]
+                banks_synced = (json_ids == py_ids)
+                if not banks_synced:
+                    errors_count += 1
+                log_check("Синхронизация банков (questions.py <-> cefr_adaptive_bank.json)", banks_synced,
+                          "Расхождение ID вопросов между двумя источниками правды!")
+            except Exception as e:
+                errors_count += 1
+                log_check("Синхронизация банков (questions.py <-> cefr_adaptive_bank.json)", False, str(e))
+        else:
+            errors_count += 1
+            log_check("Файл tests_data/cefr_adaptive_bank.json", False, "Файл отсутствует")
+
     except Exception as e:
         errors_count += 1
         log_check("Импорт backend.questions", False, str(e))

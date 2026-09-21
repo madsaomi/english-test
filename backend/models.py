@@ -34,6 +34,7 @@ class UserContactSubmission(BaseModel):
     phone: Optional[str] = None
     telegram_username: Optional[str] = None
     tg_user_id: Optional[int] = None
+    tg_init_data: Optional[str] = None
 
 class SkillBreakdown(BaseModel):
     category: str
@@ -60,6 +61,7 @@ class TestResult(BaseModel):
     session_id: str
     cefr_level: str  # A1, A2, B1, B2, C1, C2
     level_title: str  # e.g. "Upper-Intermediate (Продвинутый)"
+    cefr_description: str = ""  # описание уровня для экрана результатов
     score: int  # 0-100
     total_questions: int
     correct_count: int

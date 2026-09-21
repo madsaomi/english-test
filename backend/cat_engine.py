@@ -1,10 +1,14 @@
 import uuid
 import math
 import random
+import time
+import logging
 from typing import Dict, List, Optional, Set
 from .models import Question, ClientQuestion, TestResult, SkillBreakdown, QuestionReviewItem
 from .questions import QUESTION_BANK
 from .test_loader import test_repository
+
+logger = logging.getLogger("cat_engine")
 
 CEFR_LEVELS = [
     (1.0, 1.6, "A1", "A1 (Beginner)", "Начальный уровень владения языком. Понимание базовых фраз, построение простых предложений."),
@@ -42,6 +46,7 @@ class TestSession:
         self.tg_username: Optional[str] = None
         self.tg_user_id: Optional[int] = None
         self.result: Optional[TestResult] = None
+        self.last_activity: float = time.time()
 
 class CATEngine:
     def __init__(self):
@@ -71,6 +76,19 @@ class CATEngine:
 
     def get_session(self, session_id: str) -> Optional[TestSession]:
         return self.sessions.get(session_id)
+
+    def cleanup_expired_sessions(self, max_age_seconds: float = 86400) -> int:
+        """Удаляет неактивные более max_age_seconds сессии (состояние EXPIRED)."""
+        now = time.time()
+        expired_ids = [
+            sid for sid, s in self.sessions.items()
+            if now - (s.last_activity or now) > max_age_seconds
+        ]
+        for sid in expired_ids:
+            self.sessions.pop(sid, None)
+        if expired_ids:
+            logger.info(f"🗑 GC: удалено устаревших сессий: {len(expired_ids)}")
+        return len(expired_ids)
 
     def select_next_question(self, session: TestSession) -> Optional[Question]:
         if session.test_mode == "fixed":
@@ -121,6 +139,10 @@ class CATEngine:
         )
 
     def submit_answer(self, session: TestSession, question_id: str, selected_option: int, time_spent: float) -> bool:
+        # Нормализация времени ответа: минимум 0.5 сек (защита от автокликеров, SECURITY_SPEC)
+        time_spent = max(0.5, float(time_spent))
+        session.last_activity = time.time()
+
         if not session.current_question or session.current_question.id != question_id:
             # Поиск в вопросах сессии или общем пуле
             q = next((item for item in session.curated_questions if item.id == question_id), None)
@@ -275,6 +297,7 @@ class CATEngine:
             session_id=session.session_id,
             cefr_level=cefr_code,
             level_title=cefr_title,
+            cefr_description=cefr_desc,
             score=normalized_score,
             total_questions=total_questions,
             correct_count=correct_count,

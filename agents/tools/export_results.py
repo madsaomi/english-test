@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Export student leads and test results to CSV / JSON format for CRM or teachers."""
+"""Export student leads and test results to CSV / JSON format for CRM or teachers.
+
+Данные берутся с реального эндпоинта GET /api/export/leads работающего бэкенда.
+Если сервер недоступен или список пуст — записывается демо-запись (fallback).
+"""
 
 import sys
 import os
@@ -20,52 +24,68 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 EXPORTS_DIR = BASE_DIR / "exports"
 EXPORTS_DIR.mkdir(exist_ok=True)
 
+LEADS_ENDPOINT = "/api/export/leads"
+
+def fetch_leads(api_url: str):
+    """Запрашивает реальные лиды с бэкенда по /api/export/leads."""
+    url = api_url.rstrip("/") + LEADS_ENDPOINT
+    req = urllib.request.Request(url)
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
 def export_leads(api_url: str = "http://127.0.0.1:8000"):
-    print(f"📡 Запрос данных с сервера {api_url}...")
+    print(f"📡 Запрос реальных данных с сервера {api_url}{LEADS_ENDPOINT}...")
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    
-    # Пытаемся получить данные сессий из работающего бэкенда
+
     leads_data = []
+    server_ok = False
     try:
-        req = urllib.request.Request(f"{api_url}/api/health")
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            health = json.loads(resp.read().decode())
-            print(f"  Сервер активен. Статус: {health.get('status')}")
+        leads_data = fetch_leads(api_url)
+        server_ok = True
+        print(f"  Получено записей с сервера: {len(leads_data)}")
     except Exception as e:
         print(f"⚠️ Не удалось подключиться к серверу: {e}")
-        print("  Экспорт локальных данных симуляции...")
 
-    # Если API доступен, запрашиваем или генерируем структурированный отчет
+    if server_ok and not leads_data:
+        print("  Сервер вернул пустой список реальных лидов.")
+
+    # Fallback: демо-запись, только если данные получить не удалось
+    if not leads_data:
+        print("  Экспорт демо-записи (сервер недоступен или нет лидов)...")
+        leads_data.append({
+            "created_at": datetime.now().isoformat(),
+            "session_id": "demo-session-uuid",
+            "student_name": "Демо Студент",
+            "phone": "+7 999 123-45-67",
+            "telegram_username": "@student_tg",
+            "test_id": "cefr_adaptive",
+            "cefr_level": "B2",
+            "level_title": "B2 (Upper-Intermediate)",
+            "score": 82,
+            "accuracy_pct": 85,
+            "time_seconds": 320,
+            "weak_topics": ["Conditionals", "Phrasal Verbs"]
+        })
+
     csv_file = EXPORTS_DIR / f"leads_{timestamp}.csv"
     json_file = EXPORTS_DIR / f"leads_{timestamp}.json"
 
-    # Шапка CSV
     fieldnames = [
-        "created_at", "session_id", "student_name", "phone", 
-        "telegram_username", "cefr_level", "score", "accuracy_pct", 
-        "time_seconds", "weak_topics"
+        "created_at", "session_id", "student_name", "phone",
+        "telegram_username", "test_id", "cefr_level", "level_title",
+        "score", "accuracy_pct", "time_seconds", "weak_topics"
     ]
-
-    sample_record = {
-        "created_at": datetime.now().isoformat(),
-        "session_id": "demo-session-uuid",
-        "student_name": "Демо Студент",
-        "phone": "+7 999 123-45-67",
-        "telegram_username": "@student_tg",
-        "cefr_level": "B2",
-        "score": 82,
-        "accuracy_pct": 85,
-        "time_seconds": 320,
-        "weak_topics": "Conditionals, Phrasal Verbs"
-    }
-    leads_data.append(sample_record)
 
     # Запись CSV
     with open(csv_file, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         for row in leads_data:
-            writer.writerow(row)
+            row_copy = dict(row)
+            if isinstance(row_copy.get("weak_topics"), list):
+                row_copy["weak_topics"] = ", ".join(row_copy["weak_topics"])
+            row_copy.setdefault("created_at", datetime.now().isoformat())
+            writer.writerow(row_copy)
 
     # Запись JSON
     with open(json_file, "w", encoding="utf-8") as f:

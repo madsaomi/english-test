@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import List
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,3 +17,12 @@ WEBAPP_URL: str = os.getenv("WEBAPP_URL", f"http://localhost:{PORT}").strip()
 
 # Режим работы бота: если токен не задан, включается демо-режим без сбоев
 IS_BOT_ENABLED: bool = bool(BOT_TOKEN and BOT_TOKEN.lower() != "your_telegram_bot_token_here")
+
+# CORS: список разрешённых origin через запятую. Если не задан — разрешаем все
+# (удобно для локальной разработки), но без куки-креденшелов.
+_ALLOWED_ORIGINS_RAW: str = os.getenv("ALLOWED_ORIGINS", "").strip()
+ALLOWED_ORIGINS: List[str] = (
+    [o.strip() for o in _ALLOWED_ORIGINS_RAW.split(",") if o.strip()]
+    if _ALLOWED_ORIGINS_RAW
+    else ["*"]
+)

@@ -30,6 +30,18 @@ jobs:
       run: |
         python agents/tools/check_integrity.py
 
+    - name: 🧩 Run Multi-Suite Tests
+      run: |
+        python agents/testing/test_multi_suites.py
+
+    - name: 📝 Run Review Feature Tests
+      run: |
+        python agents/testing/test_review_feature.py
+
+    - name: 🌐 Run HTTP Layer Tests
+      run: |
+        python agents/testing/test_api_http.py
+
     - name: 🎯 Run CAT Simulation Tests
       run: |
         python -m backend.test_simulation

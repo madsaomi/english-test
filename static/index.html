@@ -29,57 +29,19 @@
         <span class="logo-badge">CAT</span>
         <span class="logo-text">Lingua<span>Adaptive</span></span>
       </div>
-      <div class="header-status" id="header-status">
-        <span class="status-dot"></span>
-        <span id="header-status-text">AI Adaptive Engine</span>
-      </div>
     </header>
 
     <main class="main-content">
       <!-- SCREEN 1: WELCOME SCREEN -->
       <section class="screen active" id="screen-welcome">
         <div class="hero-card">
-          <div class="hero-pill">
-            <span class="sparkle-icon">✨</span>
-            <span>Компьютерное адаптивное тестирование (CEFR)</span>
-          </div>
-          
-          <h1 class="hero-title">Узнайте свой <span class="gradient-text">настоящий уровень</span> английского</h1>
-          <p class="hero-subtitle">
-            Система подбирает сложность каждого вопроса под ваши ответы: легче при ошибках, сложнее при успехе. 
-            Всего <strong>10–14 вопросов</strong> вместо скучных тестов на 50 заданий.
-          </p>
-
-          <div class="features-grid">
-            <div class="feature-item">
-              <div class="feature-icon">🎯</div>
-              <div class="feature-body">
-                <h3>Точная шкала CEFR</h3>
-                <p>Определение от A1 до C2 с разбором грамматики и лексики</p>
-              </div>
-            </div>
-            <div class="feature-item">
-              <div class="feature-icon">⚡</div>
-              <div class="feature-body">
-                <h3>Умный CAT-алгоритм</h3>
-                <p>Сложность каждого вопроса подстраивается динамически</p>
-              </div>
-            </div>
-            <div class="feature-item">
-              <div class="feature-icon">📱</div>
-              <div class="feature-body">
-                <h3>Telegram интеграция</h3>
-                <p>Результаты и персональные советы отправляются прямо в бота</p>
-              </div>
-            </div>
-          </div>
+          <h1 class="hero-title">Пройдите тест <span class="gradient-text">английского</span></h1>
+          <p class="hero-subtitle">10–14 вопросов · около 5 минут · результат получите у администратора</p>
 
           <!-- Test Selection Catalog -->
           <div class="test-catalog-section">
             <div class="catalog-header">
-              <div class="catalog-badge">📚 Каталог программ</div>
-              <h2 class="catalog-title">Выберите подходящий тест</h2>
-              <p class="catalog-subtitle">Пройдите полный адаптивный срез или сфокусируйтесь на целевой тематике</p>
+              <h2 class="catalog-title">Выберите тест</h2>
             </div>
             <div class="test-cards-grid" id="test-cards-grid">
               <!-- Rendered dynamically by JS -->
@@ -88,10 +50,9 @@
 
           <div class="action-wrap">
             <button class="btn btn-primary btn-large" id="btn-start-test">
-              <span id="btn-start-text">Пройти выбранный тест</span>
+              <span id="btn-start-text">Начать тест</span>
               <span class="arrow-icon">→</span>
             </button>
-            <p class="test-meta-hint" id="test-meta-hint">⏱ Занимает ~5-7 минут • Бесплатно и без регистрации</p>
           </div>
         </div>
       </section>
@@ -100,12 +61,7 @@
       <section class="screen" id="screen-question">
         <div class="test-topbar">
           <div class="progress-info">
-            <span class="test-suite-tag" id="q-test-title">CEFR Adaptive</span>
             <span class="q-number" id="q-counter">Вопрос 1 из ~12</span>
-            <div class="q-level-badge" id="q-level-badge">
-              <span class="badge-dot"></span>
-              <span id="current-eval-label">B1 (Intermediate)</span>
-            </div>
           </div>
           <div class="timer-badge" id="timer-badge">
             <span class="timer-icon">⏱</span>
@@ -118,19 +74,10 @@
         </div>
 
         <div class="question-card" id="question-card">
-          <div class="question-meta">
-            <span class="category-tag" id="q-category">Grammar</span>
-            <span class="topic-pill" id="q-topic">Conditionals</span>
-          </div>
-
           <h2 class="question-text" id="q-text">Loading question...</h2>
 
           <div class="options-grid" id="options-container">
             <!-- Options populated by JS -->
-          </div>
-
-          <div class="card-footer-tip">
-            <span>💡 Подсказка: Выберите один наиболее подходящий вариант ответа</span>
           </div>
         </div>
       </section>
@@ -138,14 +85,9 @@
       <!-- SCREEN 3: RESULT SCREEN -->
       <section class="screen" id="screen-result">
         <div class="result-card">
-          <div class="result-top-badge-row">
-            <span class="result-test-tag" id="result-test-name">CEFR General Adaptive Test</span>
-            <span class="result-celebration-badge">🎯 Тестирование завершено</span>
-          </div>
-          
           <div class="result-header-text">
-              <h2 class="result-title" id="result-level-title">Тестирование завершено</h2>
-            </div>
+            <h2 class="result-title">Тестирование завершено</h2>
+          </div>
 
           <!-- Telegram notification form -->
           <div class="telegram-action-box">

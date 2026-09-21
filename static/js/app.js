@@ -35,17 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // DOM Elements - Question Screen
   const qCounter = document.getElementById('q-counter');
-  const qLevelBadge = document.getElementById('q-level-badge');
-  const currentEvalLabel = document.getElementById('current-eval-label');
   const progressFill = document.getElementById('progress-fill');
   const timerText = document.getElementById('timer-text');
-  const qCategory = document.getElementById('q-category');
-  const qTopic = document.getElementById('q-topic');
   const qText = document.getElementById('q-text');
   const optionsContainer = document.getElementById('options-container');
-
-  // DOM Elements - Result Screen
-  const resultTestName = document.getElementById('result-test-name');
 
   // Telegram Form Elements
   const tgSubmitForm = document.getElementById('tg-submit-form');
@@ -59,12 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const testCardsGrid = document.getElementById('test-cards-grid');
   const btnStartTest = document.getElementById('btn-start-test');
   const btnStartText = document.getElementById('btn-start-text');
-  const testMetaHint = document.getElementById('test-meta-hint');
   const btnRestartTest = document.getElementById('btn-restart-test');
-  const qTestTitle = document.getElementById('q-test-title');
 
   let selectedTestId = 'cefr_adaptive';
-  let currentTestTitle = 'CEFR General Adaptive Test';
   let currentTestMode = 'adaptive';
   let availableTests = [];
 
@@ -176,25 +166,16 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = `test-card ${isSelected ? 'active' : ''}`;
       card.dataset.testId = test.id;
 
-      const modeLabel = test.mode === 'adaptive' ? 'Адаптивный' : 'Тематический';
-      const modeClass = test.mode === 'adaptive' ? 'adaptive' : 'fixed';
-
       card.innerHTML = `
         <div class="test-card-top">
-          <div class="test-card-icon-wrap">
-            <span class="test-card-icon">${test.icon || '📝'}</span>
-            <div class="test-card-badges">
-              <span class="test-card-level">${test.level}</span>
-              <span class="test-card-mode ${modeClass}">${modeLabel}</span>
-            </div>
-          </div>
+          <span class="test-card-icon">${test.icon || '📝'}</span>
           <div class="test-card-check">${isSelected ? '✓' : ''}</div>
         </div>
         <div class="test-card-title">${test.title}</div>
         <div class="test-card-desc">${test.description}</div>
         <div class="test-card-footer">
           <span class="test-card-meta-item">⏱ ~${test.estimated_time_minutes || 5} мин</span>
-          <span class="test-card-meta-item">❓ ${test.total_questions || 8} вопр.</span>
+          <span class="test-card-meta-item">${test.total_questions || 8} вопросов</span>
         </div>
       `;
 
@@ -227,14 +208,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const test = availableTests.find(t => t.id === testId);
     if (!test) return;
 
-    currentTestTitle = test.title;
     currentTestMode = test.mode || 'adaptive';
 
     if (btnStartText) {
-      btnStartText.textContent = `Пройти: ${test.title}`;
-    }
-    if (testMetaHint) {
-      testMetaHint.textContent = `⏱ Занимает ~${test.estimated_time_minutes || 5} минут • ${test.mode === 'adaptive' ? 'Динамическая сложность CAT' : (test.total_questions || 8) + ' вопросов'} • Бесплатно`;
+      btnStartText.textContent = 'Начать тест';
     }
   }
 
@@ -288,11 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) throw new Error('Не удалось запустить тест');
       const data = await response.json();
       sessionId = data.session_id;
-      currentTestTitle = data.test_title || currentTestTitle;
       currentTestMode = data.test_mode || currentTestMode;
-
-      if (qTestTitle) qTestTitle.textContent = currentTestTitle;
-      if (resultTestName) resultTestName.textContent = currentTestTitle;
 
       renderQuestion(data.first_question);
       showScreen(screenQuestion);
@@ -310,17 +283,11 @@ document.addEventListener('DOMContentLoaded', () => {
     currentQuestion = q;
     isAnswering = false;
 
-    // Header info
     qCounter.textContent = `Вопрос ${q.question_number} из ~${q.total_estimated}`;
-    currentEvalLabel.textContent = q.current_difficulty_label;
 
     // Progress bar
     const progressPct = Math.min(95, Math.round((q.question_number / q.total_estimated) * 100));
     progressFill.style.width = `${progressPct}%`;
-
-    // Category & Topic
-    qCategory.textContent = q.category;
-    qTopic.textContent = q.topic;
 
     // Format text with highlighted gap
     let text = q.text;
@@ -400,10 +367,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // 4. RENDER RESULT
   function renderResult(res) {
     progressFill.style.width = '100%';
-
-    if (resultTestName) {
-      resultTestName.textContent = currentTestTitle;
-    }
 
     // Результат на сайте не показывается — данные уходят администратору в Telegram.
 

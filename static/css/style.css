@@ -194,7 +194,7 @@ body {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 3rem 2.25rem;
+  padding: 2.25rem 2rem 3rem;
   box-shadow: var(--shadow-card);
   text-align: center;
   position: relative;
@@ -217,11 +217,11 @@ body {
 
 .hero-title {
   font-family: var(--font-heading);
-  font-size: 2.75rem;
+  font-size: 2.3rem;
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -1px;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.9rem;
 }
 
 .gradient-text {
@@ -232,9 +232,9 @@ body {
 
 .hero-subtitle {
   color: var(--text-secondary);
-  font-size: 1.1rem;
+  font-size: 1rem;
   max-width: 650px;
-  margin: 0 auto 2.5rem;
+  margin: 0 auto 1.75rem;
   line-height: 1.6;
 }
 
@@ -641,6 +641,8 @@ body {
 
 .result-header-text {
   flex: 1;
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
 
 .result-title {
@@ -1251,12 +1253,12 @@ body {
 
 /* Test Catalog Selection */
 .test-catalog-section {
-  margin: 2.25rem 0 1.5rem;
+  margin: 1.75rem 0 1.5rem;
   text-align: left;
 }
 
 .catalog-header {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .catalog-badge {
@@ -1275,10 +1277,9 @@ body {
 
 .catalog-title {
   font-family: var(--font-heading);
-  font-size: 1.35rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 600;
   color: #fff;
-  margin-bottom: 0.25rem;
 }
 
 .catalog-subtitle {
@@ -1298,7 +1299,7 @@ body {
   background: rgba(255, 255, 255, 0.03);
   border: 1.5px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-md);
-  padding: 1.25rem;
+  padding: 1.1rem 1.15rem;
   cursor: pointer;
   transition: all var(--transition-normal);
   display: flex;
@@ -1324,12 +1325,6 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.75rem;
-}
-
-.test-card-icon-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
 }
 
 .test-card-icon {
@@ -1430,10 +1425,10 @@ body {
 /* Responsive Breakpoints */
 @media (max-width: 768px) {
   .hero-card {
-    padding: 2rem 1.25rem;
+    padding: 1.75rem 1.25rem 2.25rem;
   }
   .hero-title {
-    font-size: 2rem;
+    font-size: 1.7rem;
   }
   .features-grid {
     grid-template-columns: 1fr;

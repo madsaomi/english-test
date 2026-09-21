@@ -45,27 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const optionsContainer = document.getElementById('options-container');
 
   // DOM Elements - Result Screen
-  const resultCefrCode = document.getElementById('result-cefr-code');
-  const resultCefrBadge = document.getElementById('result-cefr-badge');
-  const resultLevelTitle = document.getElementById('result-level-title');
-  const resultSummaryText = document.getElementById('result-summary-text');
-  const resultScore = document.getElementById('result-score');
-  const resultAccuracy = document.getElementById('result-accuracy');
-  const resultTime = document.getElementById('result-time');
-  const skillsContainer = document.getElementById('skills-container');
-  const weakTopicsBox = document.getElementById('weak-topics-box');
-  const weakTagsContainer = document.getElementById('weak-tags-container');
-  const recommendationsList = document.getElementById('recommendations-list');
-
-  // Review Elements
-  const reviewSection = document.getElementById('review-section');
-  const reviewList = document.getElementById('review-list');
-  const reviewFilterTabs = document.getElementById('review-filter-tabs');
-  const reviewCountAll = document.getElementById('review-count-all');
-  const reviewCountWrong = document.getElementById('review-count-wrong');
-  const reviewCountCorrect = document.getElementById('review-count-correct');
-  let currentReviewItems = [];
-  let currentReviewFilter = 'all';
+  const resultTestName = document.getElementById('result-test-name');
 
   // Telegram Form Elements
   const tgSubmitForm = document.getElementById('tg-submit-form');
@@ -82,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const testMetaHint = document.getElementById('test-meta-hint');
   const btnRestartTest = document.getElementById('btn-restart-test');
   const qTestTitle = document.getElementById('q-test-title');
-  const resultTestName = document.getElementById('result-test-name');
 
   let selectedTestId = 'cefr_adaptive';
   let currentTestTitle = 'CEFR General Adaptive Test';
@@ -106,17 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
   btnStartTest.addEventListener('click', startTest);
   btnRestartTest.addEventListener('click', resetToWelcome);
   tgSubmitForm.addEventListener('submit', handleTelegramSubmit);
-
-  if (reviewFilterTabs) {
-    reviewFilterTabs.addEventListener('click', (e) => {
-      const btn = e.target.closest('.review-tab-btn');
-      if (!btn) return;
-      document.querySelectorAll('.review-tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentReviewFilter = btn.dataset.filter || 'all';
-      renderFilteredReview();
-    });
-  }
 
   // Keyboard navigation for options (A, B, C, D or 1, 2, 3, 4).
   // Используем e.code (физические клавиши), чтобы работало и на русской раскладке.
@@ -437,212 +405,12 @@ document.addEventListener('DOMContentLoaded', () => {
       resultTestName.textContent = currentTestTitle;
     }
 
-    resultCefrCode.textContent = res.cefr_level;
-    resultLevelTitle.textContent = `${res.cefr_level} — ${res.level_title}`;
-    if (resultSummaryText && res.cefr_description) {
-      resultSummaryText.textContent = res.cefr_description;
-    }
-    resultScore.textContent = res.score;
-    resultAccuracy.textContent = `${res.accuracy_percentage}%`;
-
-    const mins = Math.floor(res.total_time_seconds / 60);
-    const secs = res.total_time_seconds % 60;
-    resultTime.textContent = mins > 0 ? `${mins} мин ${secs} сек` : `${secs} сек`;
-
-    // Dynamic color gradient for badge based on CEFR
-    const gradients = {
-      'A1': 'linear-gradient(135deg, #0ea5e9, #38bdf8)',
-      'A2': 'linear-gradient(135deg, #06b6d4, #14b8a6)',
-      'B1': 'linear-gradient(135deg, #10b981, #6366f1)',
-      'B2': 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-      'C1': 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-      'C2': 'linear-gradient(135deg, #f59e0b, #ef4444)',
-    };
-    if (gradients[res.cefr_level]) {
-      resultCefrBadge.style.background = gradients[res.cefr_level];
-    }
-
-    // Skills breakdown
-    skillsContainer.innerHTML = '';
-    res.skills.forEach(skill => {
-      const card = document.createElement('div');
-      card.className = 'skill-card';
-      card.innerHTML = `
-        <div class="skill-card-top">
-          <span class="skill-name">${skill.category}</span>
-          <span class="skill-level-badge">${skill.level}</span>
-        </div>
-        <div class="skill-meter">
-          <div class="skill-meter-fill" style="width: ${skill.score_percentage}%"></div>
-        </div>
-        <div class="skill-score-text">${skill.correct_answered} из ${skill.total_answered} верно (${skill.score_percentage}%)</div>
-      `;
-      skillsContainer.appendChild(card);
-    });
-
-    // Weak topics
-    if (res.weak_topics && res.weak_topics.length > 0) {
-      weakTopicsBox.style.display = 'block';
-      weakTagsContainer.innerHTML = '';
-      res.weak_topics.forEach(topic => {
-        const tag = document.createElement('span');
-        tag.className = 'weak-tag';
-        tag.textContent = topic;
-        weakTagsContainer.appendChild(tag);
-      });
-    } else {
-      weakTopicsBox.style.display = 'none';
-    }
-
-    // Recommendations
-    recommendationsList.innerHTML = '';
-    res.recommendations.forEach(rec => {
-      const li = document.createElement('li');
-      li.textContent = rec;
-      recommendationsList.appendChild(li);
-    });
-
-    // Detailed review of all questions
-    renderReview(res.review);
+    // Результат на сайте не показывается — данные уходят администратору в Telegram.
 
     // Reset Telegram form state
     tgSubmitForm.style.display = 'flex';
     tgSuccessMessage.classList.add('hidden');
     btnSendTg.disabled = false;
-  }
-
-  // 5. REVIEW RENDERING & FILTERING
-  function renderReview(reviewItems) {
-    currentReviewItems = reviewItems || [];
-    currentReviewFilter = 'all';
-
-    if (reviewFilterTabs) {
-      document.querySelectorAll('.review-tab-btn').forEach(b => {
-        if (b.dataset.filter === 'all') {
-          b.classList.add('active');
-        } else {
-          b.classList.remove('active');
-        }
-      });
-    }
-
-    const totalCount = currentReviewItems.length;
-    const wrongCount = currentReviewItems.filter(item => !item.is_correct).length;
-    const correctCount = currentReviewItems.filter(item => item.is_correct).length;
-
-    if (reviewCountAll) reviewCountAll.textContent = totalCount;
-    if (reviewCountWrong) reviewCountWrong.textContent = wrongCount;
-    if (reviewCountCorrect) reviewCountCorrect.textContent = correctCount;
-
-    renderFilteredReview();
-  }
-
-  function renderFilteredReview() {
-    if (!reviewList) return;
-    reviewList.innerHTML = '';
-
-    let filtered = currentReviewItems;
-    if (currentReviewFilter === 'wrong') {
-      filtered = currentReviewItems.filter(item => !item.is_correct);
-    } else if (currentReviewFilter === 'correct') {
-      filtered = currentReviewItems.filter(item => item.is_correct);
-    }
-
-    if (filtered.length === 0) {
-      const emptyDiv = document.createElement('div');
-      emptyDiv.className = 'review-empty-state';
-      if (currentReviewFilter === 'wrong') {
-        emptyDiv.innerHTML = `
-          <div class="empty-icon">🎉</div>
-          <h4>Отличная работа! У вас нет ошибок</h4>
-          <p>Вы правильно ответили на все вопросы теста.</p>
-        `;
-      } else {
-        emptyDiv.innerHTML = `
-          <div class="empty-icon">🔍</div>
-          <h4>Вопросов не найдено</h4>
-          <p>В выбранной категории отсутствуют вопросы.</p>
-        `;
-      }
-      reviewList.appendChild(emptyDiv);
-      return;
-    }
-
-    const keys = ['A', 'B', 'C', 'D'];
-
-    filtered.forEach(item => {
-      const card = document.createElement('div');
-      card.className = `review-card ${item.is_correct ? 'correct' : 'wrong'}`;
-
-      let formattedText = item.text.replace(
-        /___/g,
-        '<span class="gap-highlight">_____</span>'
-      );
-
-      let optionsHtml = '';
-      item.options.forEach((optText, optIdx) => {
-        const isCorrectOpt = (optIdx === item.correct_option);
-        const isUserChoice = (optIdx === item.selected_option);
-
-        let optClass = 'review-opt-item';
-        let badgeHtml = '';
-
-        if (isCorrectOpt && isUserChoice) {
-          optClass += ' is-correct';
-          badgeHtml = '<span class="review-opt-badge badge-correct-choice">✓ Ваш выбор (Верно)</span>';
-        } else if (isCorrectOpt && !isUserChoice) {
-          optClass += ' is-correct';
-          badgeHtml = '<span class="review-opt-badge badge-correct-choice">✓ Правильный ответ</span>';
-        } else if (!isCorrectOpt && isUserChoice) {
-          optClass += ' is-user-wrong';
-          badgeHtml = '<span class="review-opt-badge badge-user-choice">✕ Ваш ответ</span>';
-        }
-
-        optionsHtml += `
-          <div class="${optClass}">
-            <div class="review-opt-left">
-              <span class="review-opt-key">${keys[optIdx] || optIdx + 1}</span>
-              <span class="review-opt-text">${optText}</span>
-            </div>
-            ${badgeHtml}
-          </div>
-        `;
-      });
-
-      card.innerHTML = `
-        <div class="review-card-top">
-          <div class="review-badges-left">
-            <span class="review-q-num">Вопрос #${item.question_number}</span>
-            <span class="review-level-tag">${item.level}</span>
-            <span class="review-topic-tag">${item.category}: ${item.topic}</span>
-          </div>
-          <div class="review-status-right">
-            <span class="review-time-spent">⏱ ${item.time_spent_seconds}с</span>
-            ${
-              item.is_correct
-                ? '<span class="review-status-badge correct">✓ Верно</span>'
-                : '<span class="review-status-badge wrong">✕ Ошибка</span>'
-            }
-          </div>
-        </div>
-
-        <div class="review-q-text">${formattedText}</div>
-
-        <div class="review-options-list">
-          ${optionsHtml}
-        </div>
-
-        <div class="review-explanation-box">
-          <div class="explanation-header">
-            <span>💡</span>
-            <span>Разбор и грамматическое правило</span>
-          </div>
-          <div class="explanation-content">${item.explanation}</div>
-        </div>
-      `;
-
-      reviewList.appendChild(card);
-    });
   }
 
   // 6. SUBMIT TO TELEGRAM

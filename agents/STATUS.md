@@ -1,8 +1,8 @@
 # 📊 Текущий статус проекта (STATUS.md)
 
-**Последнее обновление:** 2026-09-19 23:40 (UTC+5)  
-**Ответственный агент:** Gemini 3.8 Flash (Antigravity IDE)  
-**Текущая фаза:** Завершена интеграция каталога программ тестирования (Multi-Test Suites)
+**Последнее обновление:** 2026-09-22 00:15 (UTC+5)  
+**Ответственный агент:** opencode (opencode/big-pickle)  
+**Текущая фаза:** «Цифровая приёмная» (PLAN-003) — заявки с ФИО/телефоном и Telegram-уведомление сотруднику
 
 ---
 
@@ -12,16 +12,20 @@
 |---|---|---|
 | **Экосистема «Второго Мозга» (`agents/`)** | 🟢 Готово | 13 разделов: правила, антипаттерны, шаблоны, ADR, баги, деплой, траблшутинг |
 | **Git-версионирование (`.git`)** | 🟢 Готово | Инициализирован Git, настроен `.gitignore`, создан первый коммит |
-| **Окружение Python & зависимости** | 🟢 Готово | Установлены `fastapi`, `aiogram`, `uvicorn`, `pydantic` |
-| **Банк вопросов & Каталог тестов (`tests_data/`)** | 🟢 Готово | 4 программы: CEFR Adaptive, Business English, Grammar Master, Starter |
-| **Репозиторий тестов (`test_loader.py`)** | 🟢 Готово | Автозагрузка JSON-наборов, метаданные, fallback на дефолтный банк |
-| **CAT & Fixed движок (`cat_engine.py`)** | 🟢 Готово | Поддержка adaptive CAT и fixed режимов, anti-cheat, генерация review |
-| **Единый сервер (`main.py` + FastAPI)** | 🟢 Готово | REST API (`/api/tests`, `/api/test/start`, `/api/test/answer`), Lifespan aiogram |
+| **Окружение Python & зависимости** | 🟢 Готово | `fastapi`, `aiogram`, `uvicorn`, `pydantic`; добавлен `httpx2` для TestClient |
+| **Банк вопросов & Каталог тестов (`tests_data/`)** | 🟢 Готово | 4 программы: CEFR Adaptive, Business English, Grammar Master, Starter; синк банков проверяется |
+| **Безопасность (CORS + Telegram initData)** | 🟢 Готово | `ALLOWED_ORIGINS` из env; HMAC-валидация WebApp initData в прод-режиме |
+| **Жизненный цикл сессий (GC)** | 🟢 Готово | `last_activity`, фоновый GC (24ч), нормализация `time_spent >= 0.5` |
+| **CAT & Fixed движок (`cat_engine.py`)** | 🟢 Готово | Adaptive CAT и fixed режимы, anti-cheat, review, CEFR-описание уровня |
+| **Единый сервер (`main.py` + FastAPI)** | 🟢 Готово | REST API; `/api/health` реальный; `GET /api/export/leads`; Lifespan aiogram |
 | **Telegram-бот (`telegram_bot.py`)** | 🟢 Готово | aiogram 3.x бот, TMA кнопка, форматированные карточки |
-| **Веб-интерфейс (`static/`)** | 🟢 Готово | Glassmorphism UI, интерактивный выбор программ, карточки, разбор ошибок |
-| **Тесты (E2E & Multi-Suites)** | 🟢 Готово | `test_multi_suites.py`, `test_review_feature.py` и `check_integrity.py` пройдены |
+| **Веб-интерфейс (`static/`)** | 🟢 Готово | Glassmorphism UI, каталог программ, CEFR-описание на результатах, хоткеи через `e.code` |
+| **Экспорт лидов** | 🟢 Готово | `/api/export/leads` + скрипт `export_results.py`; лиды персистентны (lead store) |
+| **Заявки в приёмную** | 🟢 Готово | Телефон обязателен; сотруднику — карточка (имя/уровень/телефон/дата) + второе сообщение с детальным результатом |
+| **Тесты & CI** | 🟢 Готово | `check_integrity`, `test_simulation`, `test_multi_suites`, `test_review_feature`, `test_api_http`, `test_e2e` — все PASSED, включены в GitHub Actions |
 
 ---
 
 ## 🎯 Что делается прямо сейчас:
-- Реализован каталог программ тестирования (Multi-Test Suites) и поддержка JSON-тестов. Все 4 программы протестированы от старта до детального разбора. Следующие задачи: PDF/Canvas сертификат или интерактивная карта уровней CEFR.
+- Завершён PLAN-003 (TASK-005): кандидат вводит ФИО + телефон (обязательно), сотруднику в Telegram приходят подряд карточка заявки и детальный результат. Для реальной отправки нужно настроить `BOT_TOKEN` и `ADMIN_CHAT_ID` в `.env`.
+- Следующие кандидаты: PDF/Canvas-сертификат, интерактивная карта уровней CEFR, история попыток по `tg_user_id`, настройка прод-доменов в `ALLOWED_ORIGINS`.

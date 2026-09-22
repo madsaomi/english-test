@@ -81,7 +81,7 @@ agents/
 │
 └── tasks/                         # 📋 Управление задачами
     ├── active_task.md             # Активная задача с чеклистом
-    ├── backlog.md                 # Идеи на будущее (AI Speaking/Writing, PDF-сертификаты)
+    ├── backlog.md                 # Идеи на будущее (AI Speaking/Writing; PDF-сертификаты отменены навсегда)
     └── archive/                   # Архив закрытых задач
 ```
 

@@ -38,6 +38,7 @@
       <!-- SCREEN 1: WELCOME SCREEN -->
       <section class="screen active" id="screen-welcome">
         <div class="hero-card">
+          <svg class="paperclip" viewBox="0 0 24 40" width="26" height="44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10v16a4 4 0 0 1-8 0V10a2.5 2.5 0 0 1 5 0v14a1 1 0 0 1-2 0V12"/></svg>
           <h1 class="hero-title">Пройдите тест <span class="gradient-text">английского</span></h1>
           <p class="hero-subtitle">10–14 вопросов · около 5 минут · результат получите у администратора</p>
 
@@ -71,6 +72,8 @@
             <span id="timer-text">00:00</span>
           </div>
         </div>
+
+        <div class="progress-dots" id="progress-dots" aria-hidden="true"></div>
 
         <div class="progress-bar-container">
           <div class="progress-bar-fill" id="progress-fill" style="width: 8%;"></div>
@@ -133,6 +136,10 @@
               <div class="success-text">
                 <h4>Спасибо! Подойдите к администратору.</h4>
                 <p>Ваш результат получен.</p>
+              </div>
+              <div class="stamp" aria-hidden="true">
+                <span class="stamp-main">Пройдено</span>
+                <span class="stamp-sub">LinguaAdaptive</span>
               </div>
             </div>
           </div>

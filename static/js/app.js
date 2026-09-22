@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const qText = document.getElementById('q-text');
   const optionsContainer = document.getElementById('options-container');
   const questionCard = document.getElementById('question-card');
+  const progressDots = document.getElementById('progress-dots');
 
   // Telegram Form Elements
   const tgSubmitForm = document.getElementById('tg-submit-form');
@@ -280,6 +281,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!testCardsGrid) return;
     testCardsGrid.innerHTML = '';
 
+    if (!tests || tests.length === 0) {
+      testCardsGrid.innerHTML = '<div class="catalog-empty">Тесты временно недоступны. Попробуйте обновить страницу.</div>';
+      return;
+    }
+
     tests.forEach((test) => {
       const isSelected = (test.id === selectedTestId);
       const card = document.createElement('div');
@@ -401,6 +407,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 2. RENDER QUESTION
+  function renderProgressDots(current, total) {
+    if (!progressDots) return;
+    const n = Math.max(total || 12, current);
+    let html = '';
+    for (let i = 1; i <= n; i++) {
+      const cls = i < current ? 'done' : (i === current ? 'current' : '');
+      html += `<span class="progress-dot ${cls}"></span>`;
+    }
+    progressDots.innerHTML = html;
+  }
+
   function renderQuestion(q) {
     currentQuestion = q;
     isAnswering = false;
@@ -412,6 +429,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     qCounter.textContent = `Вопрос ${q.question_number} из ~${q.total_estimated}`;
+
+    renderProgressDots(q.question_number, q.total_estimated);
 
     // Progress bar
     const progressPct = Math.min(95, Math.round((q.question_number / q.total_estimated) * 100));

@@ -161,6 +161,7 @@ body::before {
   line-height: 1.15;
   letter-spacing: -1px;
   margin-bottom: 0.9rem;
+  text-wrap: balance;
 }
 
 .gradient-text {
@@ -282,6 +283,8 @@ body::before {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
 }
 
 .progress-bar-container {
@@ -297,6 +300,22 @@ body::before {
   background: linear-gradient(90deg, var(--primary), var(--accent-cyan));
   border-radius: var(--radius-pill);
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: translateX(-100%);
+  animation: progressShimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes progressShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 .question-card {
@@ -306,7 +325,7 @@ body::before {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 2.25rem;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), inset 20px 0 0 -18px rgba(190, 18, 60, 0.3);
   transition: transform 0.3s ease;
 }
 
@@ -318,6 +337,7 @@ body::before {
   color: var(--text-primary);
   margin-bottom: 2rem;
   white-space: pre-line;
+  text-wrap: balance;
 }
 
 .question-card.q-enter {
@@ -367,6 +387,13 @@ body::before {
 .option-card.selected {
   background: rgba(79, 70, 229, 0.08);
   box-shadow: inset 3px 0 0 var(--primary);
+  animation: optionConfirm 0.3s ease;
+}
+
+@keyframes optionConfirm {
+  0% { background: rgba(79, 70, 229, 0.2); transform: scale(1.015); }
+  60% { transform: scale(1); }
+  100% { background: rgba(79, 70, 229, 0.08); transform: scale(1); }
 }
 
 .option-key {
@@ -407,6 +434,30 @@ body::before {
   border-radius: var(--radius-lg);
   padding: 2.5rem 2rem;
   box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.result-card::before {
+  content: "CAT";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-18deg);
+  font-family: var(--font-heading);
+  font-size: 180px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  color: var(--primary);
+  opacity: 0.04;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.result-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .result-header-text {
@@ -421,6 +472,7 @@ body::before {
   font-weight: 800;
   letter-spacing: -0.5px;
   margin-bottom: 0.5rem;
+  text-wrap: balance;
 }
 
 /* Telegram Action Box */
@@ -461,6 +513,7 @@ body::before {
   font-family: var(--font-heading);
   font-size: 1.15rem;
   font-weight: 700;
+  text-wrap: balance;
 }
 
 .tg-box-header p {
@@ -600,6 +653,7 @@ body::before {
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--text-primary);
+  text-wrap: balance;
 }
 
 .test-cards-grid {
@@ -627,6 +681,23 @@ body::before {
   border-color: rgba(79, 70, 229, 0.45);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px -6px rgba(28, 25, 23, 0.12);
+}
+
+.test-card:active:not(.skeleton) {
+  transform: translateY(-2px) scale(0.98);
+}
+
+.test-card:not(.skeleton) {
+  animation: cardIn 0.35s ease backwards;
+}
+
+.test-card:not(.skeleton):nth-child(2) { animation-delay: 50ms; }
+.test-card:not(.skeleton):nth-child(3) { animation-delay: 100ms; }
+.test-card:not(.skeleton):nth-child(4) { animation-delay: 150ms; }
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .test-card.active {
@@ -880,6 +951,95 @@ a:focus-visible {
   transform: translate(-50%, 0);
 }
 
+/* ==========================================================================
+   Visual details: paperclip, stamp, dots, watermark, empty state
+   ========================================================================== */
+
+.paperclip {
+  position: absolute;
+  top: 14px;
+  right: 22px;
+  transform: rotate(14deg);
+  color: var(--text-muted);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.stamp {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 3px solid var(--primary);
+  border-radius: 4px;
+  padding: 0.5rem 1.1rem;
+  margin-top: 0.5rem;
+  color: var(--primary);
+  opacity: 0.9;
+  mix-blend-mode: multiply;
+  transform: rotate(-8deg);
+  box-shadow: 0 0 0 1.5px rgba(79, 70, 229, 0.35);
+  animation: stampHit 0.3s cubic-bezier(0.2, 1.4, 0.4, 1) 0.5s backwards;
+}
+
+.stamp-main {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.stamp-sub {
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+@keyframes stampHit {
+  from { transform: rotate(-8deg) scale(1.7); opacity: 0; }
+  to { transform: rotate(-8deg) scale(1); opacity: 0.9; }
+}
+
+.progress-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 0.6rem;
+}
+
+.progress-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(28, 25, 23, 0.18);
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.progress-dot.done {
+  background: rgba(79, 70, 229, 0.35);
+  border-color: transparent;
+}
+
+.progress-dot.current {
+  background: var(--primary);
+  border-color: var(--primary);
+  transform: scale(1.25);
+}
+
+.catalog-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem 1rem;
+  border: 1.5px dashed rgba(28, 25, 23, 0.25);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
 /* Responsive Breakpoints */
 @media (max-width: 768px) {
   .hero-card {
@@ -905,4 +1065,16 @@ a:focus-visible {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

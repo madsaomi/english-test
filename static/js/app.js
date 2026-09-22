@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let timerInterval = null;
   let secondsElapsed = 0;
   let isAnswering = false;
+  let toastTimer = null;
 
   // Telegram WebApp detection
   const tg = window.Telegram?.WebApp;
@@ -59,6 +60,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentTestMode = 'adaptive';
   let availableTests = [];
 
+  const TG_BTN_DEFAULT_HTML = btnSendTg.innerHTML;
+
+  const svgIcon = (inner, size = 18, fill = false) =>
+    `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="${fill ? 'currentColor' : 'none'}" stroke="${fill ? 'none' : 'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+
+  const ICONS = {
+    clock: svgIcon('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 13),
+    target: svgIcon('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>', 20),
+    briefcase: svgIcon('<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>', 20),
+    zap: svgIcon('<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>', 20, true),
+    sprout: svgIcon('<path d="M12 21v-8"/><path d="M12 13C12 9 9 6 5 6c0 4 3 7 7 7z"/><path d="M12 13c0-3 2.5-6 6-6 0 3.5-2.5 6-6 6z"/>', 20),
+    doc: svgIcon('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>', 20),
+  };
+
   // Pre-fill Telegram data if available
   if (tgUser) {
     if (inputUserName) {
@@ -70,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Initial load of test suites
+  renderSkeletons();
   loadTestSuites();
 
   // Event Listeners
@@ -88,6 +104,85 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Phone mask: +7 (999) 000-00-00
+  function maskPhone(raw) {
+    let d = raw.replace(/\D/g, '');
+    if (d.startsWith('8')) d = '7' + d.slice(1);
+    else if (d.length > 0 && !d.startsWith('7')) d = '7' + d;
+    d = d.slice(0, 11);
+    if (!d) return '';
+    let out = '+7';
+    if (d.length > 1) out += ' (' + d.slice(1, 4);
+    if (d.length >= 4) out += ')';
+    if (d.length > 4) out += ' ' + d.slice(4, 7);
+    if (d.length > 7) out += '-' + d.slice(7, 9);
+    if (d.length > 9) out += '-' + d.slice(9, 11);
+    return out;
+  }
+
+  function countDigits(str, idx) {
+    return (str.slice(0, idx).match(/\d/g) || []).length;
+  }
+
+  function caretAtDigit(formatted, n) {
+    if (n <= 0) return 0;
+    let seen = 0;
+    for (let i = 0; i < formatted.length; i++) {
+      if (formatted[i] >= '0' && formatted[i] <= '9') {
+        seen++;
+        if (seen === n) return i + 1;
+      }
+    }
+    return formatted.length;
+  }
+
+  inputUserPhone.addEventListener('input', () => {
+    const el = inputUserPhone;
+    const digitsBefore = countDigits(el.value, el.selectionStart);
+    const formatted = maskPhone(el.value);
+    el.value = formatted;
+    const pos = caretAtDigit(formatted, digitsBefore);
+    el.setSelectionRange(pos, pos);
+  });
+
+  inputUserPhone.addEventListener('keydown', (e) => {
+    if (e.key !== 'Backspace') return;
+    const el = inputUserPhone;
+    if (el.selectionStart !== el.selectionEnd) return;
+    const pos = el.selectionStart;
+    const v = el.value;
+    if (pos > 0 && pos === v.length && /\D/.test(v[pos - 1])) {
+      e.preventDefault();
+      let i = pos - 1;
+      while (i >= 0 && /\D/.test(v[i])) i--;
+      if (i >= 0 && /\d/.test(v[i])) {
+        const n = countDigits(v, i);
+        if (n === 0) {
+          el.value = '';
+          return;
+        }
+        const nv = v.slice(0, i) + v.slice(i + 1);
+        const formatted = maskPhone(nv);
+        el.value = formatted;
+        const p = caretAtDigit(formatted, n);
+        el.setSelectionRange(p, p);
+      } else {
+        el.value = '';
+      }
+    }
+  });
+
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('visible');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toast.classList.remove('visible');
+    }, 4000);
+  }
+
   // Keyboard navigation for options (A, B, C, D or 1, 2, 3, 4).
   // Используем e.code (физические клавиши), чтобы работало и на русской раскладке.
   window.addEventListener('keydown', (e) => {
@@ -103,6 +198,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Test Suite Catalog Loader
+  function renderSkeletons() {
+    if (!testCardsGrid) return;
+    const sk = `
+      <div class="test-card skeleton" aria-hidden="true">
+        <div class="skeleton-line sk-icon"></div>
+        <div class="skeleton-line sk-title"></div>
+        <div class="skeleton-line sk-desc"></div>
+        <div class="skeleton-line sk-desc2"></div>
+        <div class="skeleton-line sk-meta"></div>
+      </div>`;
+    testCardsGrid.innerHTML = sk.repeat(4);
+  }
+
   async function loadTestSuites() {
     try {
       const res = await fetch('/api/tests');
@@ -127,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         category: 'General',
         level: 'A1-C2',
         mode: 'adaptive',
-        icon: '🎯',
+        icon: ICONS.target,
         estimated_time_minutes: 7,
         total_questions: 12
       },
@@ -138,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         category: 'Business',
         level: 'B2-C1',
         mode: 'fixed',
-        icon: '💼',
+        icon: ICONS.briefcase,
         estimated_time_minutes: 6,
         total_questions: 8
       },
@@ -149,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
         category: 'Grammar',
         level: 'A2-B2',
         mode: 'fixed',
-        icon: '⚡',
+        icon: ICONS.zap,
         estimated_time_minutes: 6,
         total_questions: 8
       },
@@ -160,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
         category: 'Starter',
         level: 'A1-A2',
         mode: 'fixed',
-        icon: '🌱',
+        icon: ICONS.sprout,
         estimated_time_minutes: 5,
         total_questions: 8
       }
@@ -180,13 +288,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       card.innerHTML = `
         <div class="test-card-top">
-          <span class="test-card-icon">${test.icon || '📝'}</span>
+          <span class="test-card-icon">${test.icon || ICONS.doc}</span>
           <div class="test-card-check">${isSelected ? '✓' : ''}</div>
         </div>
         <div class="test-card-title">${test.title}</div>
         <div class="test-card-desc">${test.description}</div>
         <div class="test-card-footer">
-          <span class="test-card-meta-item">⏱ ~${test.estimated_time_minutes || 5} мин</span>
+          <span class="test-card-meta-item">${ICONS.clock} ~${test.estimated_time_minutes || 5} мин</span>
           <span class="test-card-meta-item">${test.total_questions || 8} вопросов</span>
         </div>
       `;
@@ -264,8 +372,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. START TEST
   async function startTest() {
     btnStartTest.disabled = true;
+    btnStartTest.classList.add('is-loading');
     const originalBtnContent = btnStartTest.innerHTML;
-    btnStartTest.innerHTML = '<span>Запуск теста...</span>';
+    btnStartTest.innerHTML = '<span class="btn-spinner"></span><span>Запуск теста...</span>';
 
     try {
       const response = await fetch('/api/test/start', {
@@ -283,9 +392,10 @@ document.addEventListener('DOMContentLoaded', () => {
       showScreen(screenQuestion);
     } catch (err) {
       console.error(err);
-      alert('Ошибка при запуске теста. Проверьте подключение к серверу.');
+      showToast('Ошибка при запуске теста. Проверьте подключение к серверу.');
     } finally {
       btnStartTest.disabled = false;
+      btnStartTest.classList.remove('is-loading');
       btnStartTest.innerHTML = originalBtnContent;
     }
   }
@@ -377,8 +487,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error(err);
-      alert('Ошибка связи с сервером при отправке ответа.');
+      showToast('Ошибка связи с сервером при отправке ответа.');
       isAnswering = false;
+      document.querySelectorAll('.option-card').forEach(c => {
+        c.style.pointerEvents = '';
+      });
+      const sel = document.getElementById(`option-${index}`);
+      if (sel) sel.classList.remove('selected');
     }
   }
 
@@ -392,6 +507,8 @@ document.addEventListener('DOMContentLoaded', () => {
     tgSubmitForm.style.display = 'flex';
     tgSuccessMessage.classList.add('hidden');
     btnSendTg.disabled = false;
+    btnSendTg.classList.remove('is-loading');
+    btnSendTg.innerHTML = TG_BTN_DEFAULT_HTML;
   }
 
   // 5. FORM VALIDATION
@@ -432,7 +549,8 @@ document.addEventListener('DOMContentLoaded', () => {
       setFieldError(inputUserName, 'Укажите имя');
       firstInvalid = firstInvalid || inputUserName;
     }
-    if (!/^\+?[\d\s\-()]{10,}$/.test(phone)) {
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (phoneDigits.length !== 11 || !phoneDigits.startsWith('7')) {
       setFieldError(inputUserPhone, 'Введите корректный телефон');
       firstInvalid = firstInvalid || inputUserPhone;
     }
@@ -442,7 +560,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnSendTg.disabled = true;
-    btnSendTg.innerHTML = '<span>Отправка в Telegram...</span>';
+    btnSendTg.classList.add('is-loading');
+    btnSendTg.innerHTML = '<span class="btn-spinner"></span><span>Отправка в Telegram...</span>';
 
     try {
       const response = await fetch('/api/test/submit-contact', {
@@ -470,9 +589,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error(err);
-      alert('Произошла ошибка при отправке в Telegram. Попробуйте еще раз.');
+      showToast('Произошла ошибка при отправке в Telegram. Попробуйте еще раз.');
       btnSendTg.disabled = false;
-      btnSendTg.innerHTML = '<span class="tg-btn-icon">✈️</span><span>Отправить результат в Telegram</span>';
+      btnSendTg.classList.remove('is-loading');
+      btnSendTg.innerHTML = TG_BTN_DEFAULT_HTML;
     }
   }
 

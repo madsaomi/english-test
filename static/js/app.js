@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const timerText = document.getElementById('timer-text');
   const qText = document.getElementById('q-text');
   const optionsContainer = document.getElementById('options-container');
+  const questionCard = document.getElementById('question-card');
 
   // Telegram Form Elements
   const tgSubmitForm = document.getElementById('tg-submit-form');
@@ -75,6 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
   btnStartTest.addEventListener('click', startTest);
   btnRestartTest.addEventListener('click', resetToWelcome);
   tgSubmitForm.addEventListener('submit', handleTelegramSubmit);
+
+  [inputUserName, inputUserPhone].forEach((input) => {
+    input.addEventListener('input', () => {
+      const group = input.closest('.form-group');
+      if (group) {
+        group.classList.remove('has-error');
+        const err = group.querySelector('.field-error');
+        if (err) err.remove();
+      }
+    });
+  });
 
   // Keyboard navigation for options (A, B, C, D or 1, 2, 3, 4).
   // Используем e.code (физические клавиши), чтобы работало и на русской раскладке.
@@ -283,6 +295,12 @@ document.addEventListener('DOMContentLoaded', () => {
     currentQuestion = q;
     isAnswering = false;
 
+    if (questionCard) {
+      questionCard.classList.remove('q-enter');
+      void questionCard.offsetWidth;
+      questionCard.classList.add('q-enter');
+    }
+
     qCounter.textContent = `Вопрос ${q.question_number} из ~${q.total_estimated}`;
 
     // Progress bar
@@ -376,6 +394,29 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSendTg.disabled = false;
   }
 
+  // 5. FORM VALIDATION
+  function setFieldError(input, message) {
+    const group = input.closest('.form-group');
+    if (!group) return;
+    group.classList.add('has-error');
+    let err = group.querySelector('.field-error');
+    if (!err) {
+      err = document.createElement('span');
+      err.className = 'field-error';
+      err.setAttribute('role', 'alert');
+      group.appendChild(err);
+    }
+    err.textContent = message;
+  }
+
+  function clearFieldErrors() {
+    document.querySelectorAll('.form-group.has-error').forEach((group) => {
+      group.classList.remove('has-error');
+      const err = group.querySelector('.field-error');
+      if (err) err.remove();
+    });
+  }
+
   // 6. SUBMIT TO TELEGRAM
   async function handleTelegramSubmit(e) {
     e.preventDefault();
@@ -384,6 +425,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const name = inputUserName.value.trim();
     const phone = inputUserPhone.value.trim();
     const tgUsername = inputUserTg.value.trim().replace(/^@/, '');
+
+    clearFieldErrors();
+    let firstInvalid = null;
+    if (!name) {
+      setFieldError(inputUserName, 'Укажите имя');
+      firstInvalid = firstInvalid || inputUserName;
+    }
+    if (!/^\+?[\d\s\-()]{10,}$/.test(phone)) {
+      setFieldError(inputUserPhone, 'Введите корректный телефон');
+      firstInvalid = firstInvalid || inputUserPhone;
+    }
+    if (firstInvalid) {
+      firstInvalid.focus();
+      return;
+    }
 
     btnSendTg.disabled = true;
     btnSendTg.innerHTML = '<span>Отправка в Telegram...</span>';

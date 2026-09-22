@@ -6,10 +6,10 @@
   <title>English Level CAT — Адаптивный тест английского языка (CEFR A1–C2)</title>
   <meta name="description" content="Узнайте свой реальный уровень английского языка (CEFR: A1-C2) с помощью адаптивной системы тестирования CAT за 10-14 вопросов с отправкой в Telegram.">
   
-  <!-- Google Fonts: Inter & Outfit -->
+  <!-- Google Fonts: Inter & Lora -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
   
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -94,7 +94,7 @@
               </div>
             </div>
 
-            <form id="tg-submit-form" class="tg-form">
+            <form id="tg-submit-form" class="tg-form" novalidate>
               <div class="form-row">
                 <div class="form-group">
                   <label for="input-user-name">Ваше имя *</label>
@@ -118,7 +118,10 @@
             </form>
 
             <div class="tg-success-message hidden" id="tg-success-message">
-              <div class="success-icon">✅</div>
+              <svg class="success-check" viewBox="0 0 52 52" aria-hidden="true">
+                <circle class="success-check-circle" cx="26" cy="26" r="24" fill="none"/>
+                <path class="success-check-mark" fill="none" d="M14 27l8 8 16-16"/>
+              </svg>
               <div class="success-text">
                 <h4>Спасибо! Подойдите к администратору.</h4>
                 <p>Ваш результат получен.</p>

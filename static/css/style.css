@@ -33,7 +33,7 @@
   --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-heading: 'Outfit', var(--font-sans);
+  --font-heading: 'Lora', Georgia, 'Times New Roman', serif;
 }
 
 * {
@@ -100,7 +100,7 @@ body::before {
 .logo-badge {
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: #fff;
-  font-family: var(--font-heading);
+  font-family: var(--font-sans);
   font-weight: 800;
   font-size: 0.85rem;
   padding: 0.25rem 0.6rem;
@@ -279,7 +279,7 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 1rem;
   padding: 0.85rem 1.75rem;
@@ -443,72 +443,84 @@ body::before {
 }
 
 .question-text {
-  font-family: var(--font-sans);
-  font-size: 1.4rem;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.55;
   color: var(--text-primary);
-  margin-bottom: 1.75rem;
+  margin-bottom: 2rem;
   white-space: pre-line;
+}
+
+.question-card.q-enter {
+  animation: qEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes qEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .options-grid {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0;
   margin-bottom: 1.5rem;
+  border-top: 1px dashed rgba(28, 25, 23, 0.3);
+  border-bottom: 1px dashed rgba(28, 25, 23, 0.3);
 }
 
 .option-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  background: rgba(28, 25, 23, 0.03);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 1.1rem 1.25rem;
+  gap: 1.1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed rgba(28, 25, 23, 0.2);
+  border-radius: 0;
+  padding: 1.05rem 0.75rem;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
   user-select: none;
 }
 
+.option-card:last-child {
+  border-bottom: none;
+}
+
 .option-card:hover {
-  background: rgba(28, 25, 23, 0.05);
-  border-color: rgba(79, 70, 229, 0.4);
-  transform: translateX(4px);
+  background: rgba(79, 70, 229, 0.05);
 }
 
 .option-card:active {
-  transform: scale(0.99);
+  background: rgba(79, 70, 229, 0.08);
 }
 
 .option-card.selected {
-  background: rgba(79, 70, 229, 0.2);
-  border-color: var(--primary);
-  box-shadow: 0 0 20px -5px rgba(79, 70, 229, 0.4);
+  background: rgba(79, 70, 229, 0.08);
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .option-key {
-  width: 32px;
-  height: 32px;
+  width: 28px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: rgba(28, 25, 23, 0.06);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  justify-content: flex-start;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  transition: color 0.15s ease;
 }
 
 .option-card:hover .option-key,
 .option-card.selected .option-key {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
+  background: transparent;
+  color: var(--primary);
+  border-color: transparent;
 }
 
 .option-text {
@@ -878,14 +890,27 @@ body::before {
   color: var(--text-muted);
 }
 
+.form-group.has-error input {
+  border-color: #be123c;
+  box-shadow: 0 0 0 3px rgba(190, 18, 60, 0.15);
+}
+
+.field-error {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #be123c;
+}
+
 .tg-success-message {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  text-align: center;
+  gap: 0.75rem;
   background: rgba(16, 185, 129, 0.15);
   border: 1px solid rgba(16, 185, 129, 0.35);
   border-radius: var(--radius-md);
-  padding: 1.25rem;
+  padding: 1.75rem 1.25rem;
   margin-top: 1rem;
   animation: fadeIn 0.3s ease;
 }
@@ -894,14 +919,38 @@ body::before {
   display: none;
 }
 
-.success-icon {
-  font-size: 1.75rem;
+.success-check {
+  width: 64px;
+  height: 64px;
+}
+
+.success-check-circle {
+  stroke: #047857;
+  stroke-width: 2.5;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: checkDraw 0.5s ease-out forwards;
+}
+
+.success-check-mark {
+  stroke: #047857;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: checkDraw 0.35s ease-out 0.4s forwards;
+}
+
+@keyframes checkDraw {
+  to { stroke-dashoffset: 0; }
 }
 
 .success-text h4 {
-  font-size: 0.95rem;
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
   color: #047857;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .success-text p {

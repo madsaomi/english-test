@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: english-test
+    runtime: docker
+    region: frankfurt
+    # free — спит без трафика; для живого Telegram-бота поставьте 0.5c-512mb+
+    # и добавьте disk (см. ниже): free-план persistent disk не поддерживает
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      # PORT Render задаёт сам; Dockerfile слушает ${PORT:-8000}
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_CHAT_ID
+        sync: false
+      # После первого деплоя впишите https://<service>.onrender.com
+      - key: WEBAPP_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+    # Для paid-плана и сохранения data/leads.json между редеплоями:
+    # disk:
+    #   name: english-test-data
+    #   mountPath: /app/data
+    #   sizeGB: 1

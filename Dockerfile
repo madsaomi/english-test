@@ -17,11 +17,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./backend/
 COPY static/ ./static/
 COPY agents/ ./agents/
+COPY tests_data/ ./tests_data/
 COPY AGENTS.md .
 COPY .env.example .
 
 # Порт приложения
 EXPOSE 8000
 
-# Запуск единого сервера с поддержкой динамического порта Railway ($PORT)
+# Запуск единого сервера с поддержкой динамического порта хостинга ($PORT)
 CMD ["sh", "-c", "python -m uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

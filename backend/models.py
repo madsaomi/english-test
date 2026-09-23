@@ -8,9 +8,11 @@ class Question(BaseModel):
     category: str  # Grammar, Vocabulary, Usage
     topic: str  # e.g., Present Simple, Conditionals, Inversion
     text: str
-    options: List[str]
-    correct_option: int  # 0-indexed
-    explanation: str
+    question_type: str = "choice"  # "choice" (4 options) or "text" (free-text input)
+    options: List[str] = []
+    correct_option: Optional[int] = None  # 0-indexed; None for text questions
+    correct_text: Optional[str] = None  # canonical answer for text questions (case-sensitive)
+    explanation: str = ""
 
 class ClientQuestion(BaseModel):
     id: str
@@ -19,13 +21,15 @@ class ClientQuestion(BaseModel):
     category: str
     topic: str
     text: str
+    question_type: str = "choice"
     options: List[str]
     current_difficulty_label: str  # e.g. "B1 (Intermediate)"
 
 class AnswerSubmission(BaseModel):
     session_id: str
     question_id: str
-    selected_option: int
+    selected_option: Optional[int] = None
+    selected_text: Optional[str] = None
     time_spent_seconds: float = 0.0
 
 class UserContactSubmission(BaseModel):
@@ -50,11 +54,14 @@ class QuestionReviewItem(BaseModel):
     category: str
     topic: str
     text: str
+    question_type: str = "choice"
     options: List[str]
-    selected_option: int
-    correct_option: int
+    selected_option: Optional[int] = None
+    correct_option: Optional[int] = None
+    selected_text: Optional[str] = None
+    correct_text: Optional[str] = None
     is_correct: bool
-    explanation: str
+    explanation: str = ""
     time_spent_seconds: float
 
 class TestResult(BaseModel):
@@ -88,7 +95,7 @@ class TestSuite(TestSuiteMeta):
     questions: List[Question] = []
 
 class StartTestRequest(BaseModel):
-    test_id: Optional[str] = "cefr_adaptive"
+    test_id: Optional[str] = None
 
 class StartTestResponse(BaseModel):
     session_id: str

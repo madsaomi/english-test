@@ -1,0 +1,842 @@
+{
+  "id": "test_general_2026",
+  "title": "General English Test 2026",
+  "description": "Основной общий тест 2026 года: грамматика, лексика и употребление английского языка. 45 вопросов с выбором ответа и 5 с вводом текста.",
+  "category": "General",
+  "level": "A1-C1",
+  "mode": "fixed",
+  "icon": "📝",
+  "estimated_time_minutes": 15,
+  "questions": [
+    {
+      "id": "g26_01",
+      "level": "A1",
+      "difficulty": 1.0,
+      "category": "Grammar",
+      "topic": "Verb To Be",
+      "text": "My brother ___ a teacher.",
+      "question_type": "choice",
+      "options": [
+        "be",
+        "am",
+        "is",
+        "are"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_02",
+      "level": "A1",
+      "difficulty": 1.1,
+      "category": "Grammar",
+      "topic": "Personal Pronouns",
+      "text": "Islam and Azamat learn English together. ___ are friends.",
+      "question_type": "choice",
+      "options": [
+        "We",
+        "She",
+        "You",
+        "They"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_03",
+      "level": "A1",
+      "difficulty": 1.3,
+      "category": "Grammar",
+      "topic": "Possessive Pronouns",
+      "text": "Is this cat ___?",
+      "question_type": "choice",
+      "options": [
+        "you",
+        "him",
+        "yours",
+        "her"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_04",
+      "level": "A1",
+      "difficulty": 1.2,
+      "category": "Grammar",
+      "topic": "Articles",
+      "text": "His dream is to become ___ football player.",
+      "question_type": "choice",
+      "options": [
+        "an",
+        "a",
+        "the",
+        "–"
+      ],
+      "correct_option": 1,
+      "explanation": ""
+    },
+    {
+      "id": "g26_05",
+      "level": "A1",
+      "difficulty": 1.3,
+      "category": "Grammar",
+      "topic": "There is / There are",
+      "text": "___ a lot of restaurants near our hotel.",
+      "question_type": "choice",
+      "options": [
+        "There is",
+        "These are",
+        "They is",
+        "There are"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_06",
+      "level": "A1",
+      "difficulty": 1.4,
+      "category": "Grammar",
+      "topic": "Present Simple",
+      "text": "My sisters ___ horror films.",
+      "question_type": "choice",
+      "options": [
+        "does not like",
+        "likes",
+        "likes not",
+        "do not like"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_07",
+      "level": "A1",
+      "difficulty": 1.5,
+      "category": "Grammar",
+      "topic": "Past Simple",
+      "text": "We ___ a wonderful holiday last month.",
+      "question_type": "choice",
+      "options": [
+        "have",
+        "had",
+        "has",
+        "having"
+      ],
+      "correct_option": 1,
+      "explanation": ""
+    },
+    {
+      "id": "g26_08",
+      "level": "A1",
+      "difficulty": 1.4,
+      "category": "Grammar",
+      "topic": "Verb To Be Past",
+      "text": "Aziz __ not at the party yesterday.",
+      "question_type": "choice",
+      "options": [
+        "is",
+        "am",
+        "were",
+        "was"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_09",
+      "level": "A2",
+      "difficulty": 1.8,
+      "category": "Grammar",
+      "topic": "Offers & Invitations",
+      "text": "___ a cup of cappuccino? -  Yes, please.",
+      "question_type": "choice",
+      "options": [
+        "Do you like",
+        "Want you",
+        "Would you like",
+        "Are you like"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_10",
+      "level": "A2",
+      "difficulty": 2.0,
+      "category": "Grammar",
+      "topic": "Comparatives",
+      "text": "This movie is ___ than the one we watched last week.",
+      "question_type": "choice",
+      "options": [
+        "interesting",
+        "most interesting",
+        "the most interesting",
+        "more interesting"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_11",
+      "level": "A2",
+      "difficulty": 1.9,
+      "category": "Grammar",
+      "topic": "Future (will)",
+      "text": "Bob: \"What are your plans for the weekend?\" Leyla: \"I'm not sure yet. I think I ___ stay home and relax.\"",
+      "question_type": "choice",
+      "options": [
+        "will",
+        "going to",
+        "am",
+        "does"
+      ],
+      "correct_option": 0,
+      "explanation": ""
+    },
+    {
+      "id": "g26_12",
+      "level": "A2",
+      "difficulty": 1.7,
+      "category": "Usage",
+      "topic": "Adverbs of Frequency",
+      "text": "Manzura: \"Do you listen to classical music?\" Aybek: \"No, ___ . I hate it\"",
+      "question_type": "choice",
+      "options": [
+        "never",
+        "sometimes",
+        "usually",
+        "seldom"
+      ],
+      "correct_option": 0,
+      "explanation": ""
+    },
+    {
+      "id": "g26_13",
+      "level": "A1",
+      "difficulty": 1.6,
+      "category": "Grammar",
+      "topic": "some / any",
+      "text": "Is there ___ water in the bottle? I want to drink.",
+      "question_type": "choice",
+      "options": [
+        "some",
+        "a",
+        "any",
+        "the"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_14",
+      "level": "A1",
+      "difficulty": 1.5,
+      "category": "Grammar",
+      "topic": "Prepositions of Place",
+      "text": "Alan’s computer is  ___  the table, next to the TV.",
+      "question_type": "choice",
+      "options": [
+        "beside",
+        "on",
+        "in",
+        "over"
+      ],
+      "correct_option": 1,
+      "explanation": ""
+    },
+    {
+      "id": "g26_15",
+      "level": "A1",
+      "difficulty": 1.4,
+      "category": "Grammar",
+      "topic": "Present Simple 3rd person",
+      "text": "Aynura ___ a lot of vegetables because she wants to stay healthy.",
+      "question_type": "choice",
+      "options": [
+        "eat",
+        "eats",
+        "is eating",
+        "will eat"
+      ],
+      "correct_option": 1,
+      "explanation": ""
+    },
+    {
+      "id": "g26_16",
+      "level": "B1",
+      "difficulty": 2.8,
+      "category": "Grammar",
+      "topic": "Present Perfect vs Past Simple",
+      "text": "Aziza: \"Have you ever ___ to Korea?\"\nDilnoza: \"Yes, I ___ there last year.\"",
+      "question_type": "choice",
+      "options": [
+        "go / went",
+        "went / have gone",
+        "gone / go",
+        "been / went"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_17",
+      "level": "A2",
+      "difficulty": 2.0,
+      "category": "Grammar",
+      "topic": "since / for",
+      "text": "Jakhangir and Parakhat have been friends ___ childhood and have many fond memories together.",
+      "question_type": "choice",
+      "options": [
+        "since",
+        "for",
+        "during",
+        "from"
+      ],
+      "correct_option": 0,
+      "explanation": ""
+    },
+    {
+      "id": "g26_18",
+      "level": "A2",
+      "difficulty": 2.0,
+      "category": "Grammar",
+      "topic": "Modal Verbs (advice)",
+      "text": "You ___ take your umbrella. The weather forecast says it might rain later.",
+      "question_type": "choice",
+      "options": [
+        "can",
+        "will",
+        "must",
+        "should"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_19",
+      "level": "A2",
+      "difficulty": 2.2,
+      "category": "Grammar",
+      "topic": "Modal Verbs (deduction)",
+      "text": "He ___ be at work because his car is parked near his house.",
+      "question_type": "choice",
+      "options": [
+        "can’t",
+        "must",
+        "mustn’t",
+        "would"
+      ],
+      "correct_option": 0,
+      "explanation": ""
+    },
+    {
+      "id": "g26_20",
+      "level": "B1",
+      "difficulty": 2.9,
+      "category": "Grammar",
+      "topic": "Relative Clauses",
+      "text": "This is the watch ___ my father gave me for my birthday.",
+      "question_type": "choice",
+      "options": [
+        "when",
+        "where",
+        "whose",
+        "which"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_21",
+      "level": "B1",
+      "difficulty": 3.0,
+      "category": "Grammar",
+      "topic": "First Conditional",
+      "text": "If the children ___ their homework by 6 pm, they can go out to play.",
+      "question_type": "choice",
+      "options": [
+        "will finish",
+        "finish",
+        "would finish",
+        "finished"
+      ],
+      "correct_option": 1,
+      "explanation": ""
+    },
+    {
+      "id": "g26_22",
+      "level": "B1",
+      "difficulty": 2.3,
+      "category": "Grammar",
+      "topic": "used to",
+      "text": "I ___ smoke, but now I lead a healthy lifestyle.",
+      "question_type": "choice",
+      "options": [
+        "use to",
+        "using to",
+        "used to",
+        "uses to"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_23",
+      "level": "A2",
+      "difficulty": 1.9,
+      "category": "Grammar",
+      "topic": "Comparatives (irregular)",
+      "text": "Yulduz is becoming a ___ dancer with each class she takes.",
+      "question_type": "choice",
+      "options": [
+        "gooder",
+        "better",
+        "best",
+        "more good"
+      ],
+      "correct_option": 1,
+      "explanation": ""
+    },
+    {
+      "id": "g26_24",
+      "level": "A2",
+      "difficulty": 2.1,
+      "category": "Grammar",
+      "topic": "Gerund",
+      "text": "She enjoys ___ sports at the sports club.",
+      "question_type": "choice",
+      "options": [
+        "do",
+        "to do",
+        "doing",
+        "did"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_25",
+      "level": "A2",
+      "difficulty": 2.2,
+      "category": "Grammar",
+      "topic": "Infinitive",
+      "text": "My parents encouraged me ___ their path and become a doctor..",
+      "question_type": "choice",
+      "options": [
+        "follow",
+        "following",
+        "to follow",
+        "followed"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_26",
+      "level": "B1",
+      "difficulty": 3.0,
+      "category": "Grammar",
+      "topic": "Reported Speech",
+      "text": "Direct speech: She said, \"I am washing the dishes now.\"",
+      "question_type": "choice",
+      "options": [
+        "She said that she is washing the dishes.",
+        "She said that she was washing the dishes now.",
+        "She said that she is washing the dishes then.",
+        "She said that she was washing the dishes then."
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_27",
+      "level": "B1",
+      "difficulty": 2.6,
+      "category": "Grammar",
+      "topic": "mind + Gerund",
+      "text": "Would you mind ___ the window?",
+      "question_type": "choice",
+      "options": [
+        "opening",
+        "to open",
+        "open",
+        "opens"
+      ],
+      "correct_option": 0,
+      "explanation": ""
+    },
+    {
+      "id": "g26_28",
+      "level": "B2",
+      "difficulty": 3.6,
+      "category": "Vocabulary",
+      "topic": "Idioms",
+      "text": "A: I am so nervous. I am going on stage now. B: Well, ___ a leg!",
+      "question_type": "choice",
+      "options": [
+        "do",
+        "make",
+        "break",
+        "create"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_29",
+      "level": "B1",
+      "difficulty": 2.8,
+      "category": "Grammar",
+      "topic": "neither / nor",
+      "text": "She likes ___ singing nor dancing.",
+      "question_type": "choice",
+      "options": [
+        "both",
+        "either",
+        "neither",
+        "not only"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_30",
+      "level": "B1",
+      "difficulty": 2.9,
+      "category": "Grammar",
+      "topic": "unless",
+      "text": "You cannot enter the building ___ you have the ticket.",
+      "question_type": "choice",
+      "options": [
+        "unless",
+        "in case",
+        "otherwise",
+        "so that"
+      ],
+      "correct_option": 0,
+      "explanation": ""
+    },
+    {
+      "id": "g26_31",
+      "level": "B1",
+      "difficulty": 2.7,
+      "category": "Grammar",
+      "topic": "Gerund after verbs",
+      "text": "Islam suggested ___ this terrible job.",
+      "question_type": "choice",
+      "options": [
+        "quit",
+        "to quitting",
+        "to quit",
+        "quitting"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_32",
+      "level": "B1",
+      "difficulty": 3.0,
+      "category": "Grammar",
+      "topic": "First Conditional",
+      "text": "If Atabek ___ IELTS, he will apply for this scholarship.",
+      "question_type": "choice",
+      "options": [
+        "gets",
+        "got",
+        "will get",
+        "would get"
+      ],
+      "correct_option": 0,
+      "explanation": ""
+    },
+    {
+      "id": "g26_33",
+      "level": "B2",
+      "difficulty": 3.5,
+      "category": "Grammar",
+      "topic": "Future (prediction)",
+      "text": "Do you think he ___ pass the test?",
+      "question_type": "choice",
+      "options": [
+        "is going to",
+        "has",
+        "will",
+        "would be"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_34",
+      "level": "B1",
+      "difficulty": 2.7,
+      "category": "Grammar",
+      "topic": "remember + Gerund",
+      "text": "I remember ___the door. Don’t worry!",
+      "question_type": "choice",
+      "options": [
+        "to lock",
+        "lock",
+        "to locking",
+        "locking"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_35",
+      "level": "B1",
+      "difficulty": 2.9,
+      "category": "Grammar",
+      "topic": "Relative Clauses (where)",
+      "text": "The city ___ my mother was born is Nukus.",
+      "question_type": "choice",
+      "options": [
+        "what",
+        "where",
+        "which",
+        "when"
+      ],
+      "correct_option": 1,
+      "explanation": ""
+    },
+    {
+      "id": "g26_36",
+      "level": "B1",
+      "difficulty": 2.8,
+      "category": "Vocabulary",
+      "topic": "Family",
+      "text": "I'm so excited! My sister's just had a baby boy and I've always wanted a ___ .",
+      "question_type": "choice",
+      "options": [
+        "cousin",
+        "granddaughter",
+        "nephew",
+        "son-in-law"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_37",
+      "level": "B1",
+      "difficulty": 3.0,
+      "category": "Vocabulary",
+      "topic": "Verbs (finance)",
+      "text": "How much do I ___ you? – 500k sums. You can give it whenever you want.",
+      "question_type": "choice",
+      "options": [
+        "owe",
+        "lend",
+        "borrow",
+        "news"
+      ],
+      "correct_option": 0,
+      "explanation": ""
+    },
+    {
+      "id": "g26_38",
+      "level": "B1",
+      "difficulty": 3.0,
+      "category": "Vocabulary",
+      "topic": "Collocations (clothes)",
+      "text": "Do you think this sweater ___ with these jeans?",
+      "question_type": "choice",
+      "options": [
+        "fits",
+        "does",
+        "chooses",
+        "matches"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_39",
+      "level": "B1",
+      "difficulty": 3.1,
+      "category": "Vocabulary",
+      "topic": "Shopping",
+      "text": "The computer broke the first time I used it so the store gave me a full ___.",
+      "question_type": "choice",
+      "options": [
+        "receipt",
+        "discount",
+        "refund",
+        "sale"
+      ],
+      "correct_option": 2,
+      "explanation": ""
+    },
+    {
+      "id": "g26_40",
+      "level": "B1",
+      "difficulty": 3.2,
+      "category": "Vocabulary",
+      "topic": "Phrasal Verbs",
+      "text": "Mekhri was ___by her grandmother.",
+      "question_type": "choice",
+      "options": [
+        "brought up",
+        "grown up",
+        "given up",
+        "risen up"
+      ],
+      "correct_option": 0,
+      "explanation": ""
+    },
+    {
+      "id": "g26_41",
+      "level": "B1",
+      "difficulty": 3.0,
+      "category": "Vocabulary",
+      "topic": "Work & Experience",
+      "text": "People with no previous ___need not apply.",
+      "question_type": "choice",
+      "options": [
+        "experiment",
+        "experience",
+        "skills",
+        "experienced"
+      ],
+      "correct_option": 1,
+      "explanation": ""
+    },
+    {
+      "id": "g26_42",
+      "level": "B1",
+      "difficulty": 3.0,
+      "category": "Vocabulary",
+      "topic": "Collocations (transport)",
+      "text": "After the plane ___off, he was able to relax and start to enjoy the flight.",
+      "question_type": "choice",
+      "options": [
+        "went",
+        "took",
+        "flew",
+        "made"
+      ],
+      "correct_option": 1,
+      "explanation": ""
+    },
+    {
+      "id": "g26_43",
+      "level": "B2",
+      "difficulty": 3.7,
+      "category": "Vocabulary",
+      "topic": "Crime",
+      "text": "Theft and ___ are still among the most serious crimes in many countries.",
+      "question_type": "choice",
+      "options": [
+        "welfare",
+        "homicide",
+        "sacrifice",
+        "ignorance"
+      ],
+      "correct_option": 1,
+      "explanation": ""
+    },
+    {
+      "id": "g26_44",
+      "level": "B2",
+      "difficulty": 3.8,
+      "category": "Vocabulary",
+      "topic": "Adjectives",
+      "text": "His attitude towards us lately is ___, so I think we should talk to him.",
+      "question_type": "choice",
+      "options": [
+        "intolerable",
+        "virtual",
+        "considerable",
+        "inevitable"
+      ],
+      "correct_option": 0,
+      "explanation": ""
+    },
+    {
+      "id": "g26_45",
+      "level": "B2",
+      "difficulty": 3.6,
+      "category": "Vocabulary",
+      "topic": "Verbs (evaluation)",
+      "text": "Youngsters should never ___ the importance of education in their future career.",
+      "question_type": "choice",
+      "options": [
+        "capture",
+        "calculate",
+        "judge",
+        "underestimate"
+      ],
+      "correct_option": 3,
+      "explanation": ""
+    },
+    {
+      "id": "g26_46",
+      "level": "A2",
+      "difficulty": 2.0,
+      "category": "Grammar",
+      "topic": "Past Continuous",
+      "text": "Helena ___ when I came home. (to read)",
+      "question_type": "text",
+      "options": [],
+      "correct_option": null,
+      "correct_text": "was reading",
+      "explanation": ""
+    },
+    {
+      "id": "g26_47",
+      "level": "C1",
+      "difficulty": 4.7,
+      "category": "Grammar",
+      "topic": "Future Perfect Continuous",
+      "text": "I ___ in London for five years by January. (to live)",
+      "question_type": "text",
+      "options": [],
+      "correct_option": null,
+      "correct_text": "will have been living",
+      "explanation": ""
+    },
+    {
+      "id": "g26_48",
+      "level": "A1",
+      "difficulty": 1.5,
+      "category": "Grammar",
+      "topic": "Present Continuous",
+      "text": "Look! The children ___ outside. (to play)",
+      "question_type": "text",
+      "options": [],
+      "correct_option": null,
+      "correct_text": "are playing",
+      "explanation": ""
+    },
+    {
+      "id": "g26_49",
+      "level": "B1",
+      "difficulty": 3.0,
+      "category": "Grammar",
+      "topic": "Third Conditional",
+      "text": "If she ___ harder, she would have passed the test. (to study)",
+      "question_type": "text",
+      "options": [],
+      "correct_option": null,
+      "correct_text": "had studied",
+      "explanation": ""
+    },
+    {
+      "id": "g26_50",
+      "level": "B1",
+      "difficulty": 2.8,
+      "category": "Grammar",
+      "topic": "Present Perfect Continuous",
+      "text": "Come on! It is 7 pm. I ___ for you for an hour.  (to wait)",
+      "question_type": "text",
+      "options": [],
+      "correct_option": null,
+      "correct_text": "have been waiting",
+      "explanation": ""
+    }
+  ]
+}

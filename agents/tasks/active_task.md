@@ -1,35 +1,39 @@
-# 📋 Активная задача: TASK-011 — Визуальные детали и характер бумажного стиля
+# 📋 Активная задача: TASK-012 — «Test for general 2026» как единственный основной тест
 
 **Статус:** 🟢 COMPLETED (Завершена)  
 **Дата создания:** 2026-09-22  
 **Дата завершения:** 2026-09-22  
-**Исполнитель:** opencode (opencode/big-pickle)  
+**Исполнитель:** opencode (opencode/mimo-v2.6-flash-free)  
+**План:** PLAN-010 `agents/plans/plan_010_main_test_general_2026.md`
 
 ---
 
 ## 🎯 Цель задачи
-Микро-полировка типографики и состояний (пункты 1–6 из списка пользователя), декоративный характер бумажного стиля (7–10) и навигационные состояния (11–13). Только HTML/CSS/JS фронтенд.
+Сделать `Test for general 2026.docx` единственным основным тестом платформы, полностью удалить все автоматически созданные тесты и реализовать поле ввода для 5 текстовых вопросов (case-sensitive).
+
+## 📌 Решения пользователя
+1. Объём удаления: «Всё кроме нового» — 3 JSON + `cefr_adaptive` + `QUESTION_BANK` + `cefr_adaptive_bank.json` + CAT-проверки старого образца.
+2. 5 fill-in вопросов → поле ввода; сравнение **с учётом регистра** (только `.strip()` внешних пробелов).
+3. `explanation: ""` для всех вопросов — без подсказок и пояснений.
 
 ---
 
 ## 📌 Чек-лист выполнения:
 
-- [x] **Шаг 1 (№1):** `font-variant-numeric: tabular-nums` + `font-feature-settings: 'tnum'` на `.timer-badge` — цифры MM:SS не дрожат.
-- [x] **Шаг 2 (№2):** `text-wrap: balance` на `.hero-title`, `.question-text`, `.result-title`, `.catalog-title`, `.tg-box-header h3` (5 селекторов).
-- [x] **Шаг 3 (№3):** Глобальный `@media (prefers-reduced-motion: reduce)` — `animation-duration/delay 0.01ms`, `iteration-count 1`, `transition-duration 0.01ms`, `scroll-behavior auto` (все с `!important`).
-- [x] **Шаг 4 (№4):** Shimmer прогресс-бара — `.progress-bar-fill::after` с бегущим белым бликом (`progressShimmer` 1.8s), `position:relative; overflow:hidden` на fill.
-- [x] **Шаг 5 (№5):** Fade-in карточек — `.test-card:not(.skeleton)` c `cardIn` (0.35s, `backwards`) + `nth-child` задержки 0/50/100/150ms; скелетоны не анимируются.
-- [x] **Шаг 6 (№6):** Подтверждение варианта — `.option-card.selected` + `optionConfirm` (вспышка фона 0.2→0.08 + scale 1.015→1, 0.3s) на паузе перед следующим вопросом.
-- [x] **Шаг 7 (№7):** Rubber-stamp — HTML `.stamp` («ПРОЙДЕНО» + «LinguaAdaptive») в success-блоке; двойная рамка (3px + outset 1.5px), поворот −8°, `mix-blend-mode: multiply`, анимация «удара» `stampHit` (scale 1.7→1, задержка 0.5s после галочки).
-- [x] **Шаг 8 (№8):** Скрепка — inline-SVG `paperclip` внутри `.hero-card` (top:14px right:22px, rotate 14°, opacity 0.55, `aria-hidden`, `pointer-events:none`); overflow hero не тронут.
-- [x] **Шаг 9 (№9):** Линовка — на `.question-card` inset-shadow `20px 0 0 -18px rgba(190,18,60,0.3)` (тонкая розовая линия слева, без сдвига layout).
-- [x] **Шаг 10 (№10):** Водяной знак — `.result-card::before` с текстом «CAT» (Lora 180px, opacity 0.04, rotate −18°); `.result-card` получил `position:relative; overflow:hidden`; дети приподняты `z-index:1`.
-- [x] **Шаг 11 (№11):** Точки прогресса — `#progress-dots` между topbar и баром; `renderProgressDots(current, total)` в `renderQuestion()` (done/current/pending, scale на current); `aria-hidden` (счётчик уже в `#q-counter`).
-- [x] **Шаг 12 (№12):** `.test-card:active:not(.skeleton)` — `translateY(-2px) scale(0.98)` (побеждает hover по специфичности).
-- [x] **Шаг 13 (№13):** Пустое состояние — `renderTestCards([])` рендерит `.catalog-empty` (пунктирная записка на всю ширину сетки `grid-column: 1/-1`).
-- [x] **Документация:** `active_task.md` (TASK-011), `STATUS.md`, журнал сессии 16, план PLAN-009 → COMPLETED.
+- [x] **Шаг 1:** `backend/models.py` — `question_type`, `selected_text`, Optional `correct_option`/`correct_text`, расширенный `QuestionReviewItem`, `StartTestRequest.test_id = None`.
+- [x] **Шаг 2:** `tests_data/test_general_2026.json` — 50 вопросов (45 choice + 5 text), id `g26_01..g26_50`, ключ docx 45/45, `explanation: ""`.
+- [x] **Шаг 3:** Удалены `test_business_english.json`, `test_grammar_master.json`, `test_starter_a1_a2.json`, `cefr_adaptive_bank.json`, `backend/questions.py`; `template_*.json` не тронуты.
+- [x] **Шаг 4:** `test_loader.py` — без `QUESTION_BANK`, `DEFAULT_TEST_ID = "test_general_2026"`, `get_default_test_id()`.
+- [x] **Шаг 5:** `cat_engine.py` — без `QUESTION_BANK`, `find_question()`, `submit_answer(..., selected_text=None)` case-sensitive, history/review с новыми полями.
+- [x] **Шаг 6:** `main.py` — дефолтный `test_id = None`, 400-валидация (choice без `selected_option`, text без непустого `selected_text`).
+- [x] **Шаг 7:** Фронтенд — `selectedTestId = 'test_general_2026'`, `renderDefaultTestCards` (1 карточка), text-ветка `#text-answer-input`/`#text-answer-btn`, `submitTextAnswer()`, CSS `.text-answer-*`.
+- [x] **Шаг 8:** Переписаны `test_simulation.py` (accuracy 100/0/50), `test_api_http.py` (catalog==1, 50Q, case, 400), `test_multi_suites.py`, `test_review_feature.py`, `test_e2e.py`, `export_results.py`.
+- [x] **Шаг 9:** `check_integrity.py` раздел 4 — ≥50 вопросов, 45 choice + 5 text, единственность набора; синк с `cefr_adaptive_bank` удалён.
+- [x] **Шаг 10:** Документация — `CODEBASE_MAP.md`, `QUESTION_AUTHORING_GUIDE.md`, `SECURITY_SPEC.md`, `README.md`, `QA_CHECKLIST.md`; user-facing текст (`index.html` meta/title/hero, `telegram_bot.py` welcome/help) приведён к 50-вопросному тесту.
+- [x] **Шаг 11:** Верификация — integrity 100%; `test_api_http` 13/13; `test_simulation` 3/3; `test_multi_suites` 4/4; `test_review_feature` OK; `test_e2e` PASSED; live smoke :8764 OK (catalog, health=50, wrong choice, empty 400, case-sensitivity, full 50/50, fallback).
+- [x] **Шаг 12:** Документация — `active_task.md` (TASK-012), `STATUS.md`, журнал сессии 17, план PLAN-010 → COMPLETED.
 
 ---
 
 ## 🏁 Результаты:
-Таймер со стабильными цифрами, сбалансированные переносы заголовков, shimmer на прогрессе, карточки всплывают после скелетонов, вариант «подтверждается» волной, success-экран получает индиго-штамп «ПРОЙДЕНО» с ударом-анимацией, hero — скрепка, вопрос — розовая линовка, result — водяной знак «CAT», прогресс — точки, карточки вдавливаются при тапе, пустой каталог — записка; анимации уважают `prefers-reduced-motion`. Бэкенд не менялся. Тесты: 100% / 10/10 / 3/3, smoke 19/19.
+Единственный тест `test_general_2026` (50 вопросов, ~15 мин) в каталоге; все автотесты удалены; 5 текстовых вопросов вводятся в поле с case-sensitive сравнением; empty text и пустой выбор — 400; неизвестный `test_id` фолбэкается на основной тест. Тесты: 100% / 13/13 / 3/3 / 4/4 / review OK / e2e OK / live smoke OK. Изменения НЕ закоммичены — ждать явного «да» пользователя.

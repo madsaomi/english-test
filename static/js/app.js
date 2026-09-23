@@ -57,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnStartText = document.getElementById('btn-start-text');
   const btnRestartTest = document.getElementById('btn-restart-test');
 
-  let selectedTestId = 'cefr_adaptive';
-  let currentTestMode = 'adaptive';
+  let selectedTestId = 'test_general_2026';
+  let currentTestMode = 'fixed';
   let availableTests = [];
 
   const TG_BTN_DEFAULT_HTML = btnSendTg.innerHTML;
@@ -230,48 +230,15 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderDefaultTestCards() {
     availableTests = [
       {
-        id: 'cefr_adaptive',
-        title: 'CEFR General Adaptive Test',
-        description: 'Полное адаптивное тестирование от A1 до C2 с динамической подстройкой сложности под ваши ответы.',
+        id: 'test_general_2026',
+        title: 'General English Test 2026',
+        description: 'Основной общий тест 2026: грамматика, лексика и употребление английского. 45 вопросов с выбором и 5 с вводом ответа.',
         category: 'General',
-        level: 'A1-C2',
-        mode: 'adaptive',
+        level: 'A1-C1',
+        mode: 'fixed',
         icon: ICONS.target,
-        estimated_time_minutes: 7,
-        total_questions: 12
-      },
-      {
-        id: 'test_business_english',
-        title: 'Business & Formal English',
-        description: 'Деловая переписка, переговоры, корпоративная лексика и профессиональный этикет.',
-        category: 'Business',
-        level: 'B2-C1',
-        mode: 'fixed',
-        icon: ICONS.briefcase,
-        estimated_time_minutes: 6,
-        total_questions: 8
-      },
-      {
-        id: 'test_grammar_master',
-        title: 'Grammar Master Intensive',
-        description: 'Времена глаголов, пассивный залог, модальные глаголы и условные предложения.',
-        category: 'Grammar',
-        level: 'A2-B2',
-        mode: 'fixed',
-        icon: ICONS.zap,
-        estimated_time_minutes: 6,
-        total_questions: 8
-      },
-      {
-        id: 'test_starter_a1_a2',
-        title: 'Starter & Elementary English',
-        description: 'Экспресс-тест для начинающих: базовые фразы, глагол to be, Present Simple и базовая лексика.',
-        category: 'Starter',
-        level: 'A1-A2',
-        mode: 'fixed',
-        icon: ICONS.sprout,
-        estimated_time_minutes: 5,
-        total_questions: 8
+        estimated_time_minutes: 15,
+        total_questions: 50
       }
     ];
     renderTestCards(availableTests);
@@ -334,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const test = availableTests.find(t => t.id === testId);
     if (!test) return;
 
-    currentTestMode = test.mode || 'adaptive';
+    currentTestMode = test.mode || 'fixed';
 
     if (btnStartText) {
       btnStartText.textContent = 'Начать тест';
@@ -443,24 +410,98 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render Options
     optionsContainer.innerHTML = '';
-    const keys = ['A', 'B', 'C', 'D'];
 
-    q.options.forEach((optText, index) => {
-      const card = document.createElement('div');
-      card.className = 'option-card';
-      card.id = `option-${index}`;
-      card.innerHTML = `
-        <div class="option-key">${keys[index]}</div>
-        <div class="option-text">${optText}</div>
+    if (q.question_type === 'text') {
+      const wrap = document.createElement('div');
+      wrap.className = 'text-answer-block';
+      wrap.innerHTML = `
+        <input type="text" class="text-answer-input" id="text-answer-input"
+               autocomplete="off" autocapitalize="off" spellcheck="false"
+               placeholder="Введите ответ..." aria-label="Введите ответ">
+        <button type="button" class="btn-primary text-answer-btn" id="text-answer-btn">Ответить</button>
       `;
-      card.addEventListener('click', () => selectOption(index));
-      optionsContainer.appendChild(card);
-    });
+      optionsContainer.appendChild(wrap);
+      const textInput = document.getElementById('text-answer-input');
+      const textBtn = document.getElementById('text-answer-btn');
+      textBtn.addEventListener('click', () => submitTextAnswer());
+      textInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitTextAnswer();
+        }
+      });
+      setTimeout(() => textInput.focus(), 50);
+    } else {
+      const keys = ['A', 'B', 'C', 'D'];
+
+      q.options.forEach((optText, index) => {
+        const card = document.createElement('div');
+        card.className = 'option-card';
+        card.id = `option-${index}`;
+        card.innerHTML = `
+          <div class="option-key">${keys[index]}</div>
+          <div class="option-text">${optText}</div>
+        `;
+        card.addEventListener('click', () => selectOption(index));
+        optionsContainer.appendChild(card);
+      });
+    }
 
     startQuestionTimer();
   }
 
   // 3. SELECT OPTION & SUBMIT ANSWER
+  async function submitTextAnswer() {
+    if (isAnswering || !currentQuestion) return;
+
+    const input = document.getElementById('text-answer-input');
+    const btn = document.getElementById('text-answer-btn');
+    const value = input ? input.value.trim() : '';
+    if (!value) {
+      showToast('Введите ответ');
+      return;
+    }
+
+    isAnswering = true;
+    stopQuestionTimer();
+    const timeSpent = Math.max(1, (Date.now() - questionStartTime) / 1000);
+
+    if (input) input.disabled = true;
+    if (btn) btn.disabled = true;
+
+    try {
+      const response = await fetch('/api/test/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          question_id: currentQuestion.id,
+          selected_text: value,
+          time_spent_seconds: timeSpent
+        })
+      });
+
+      if (!response.ok) throw new Error('Ошибка отправки ответа');
+      const data = await response.json();
+
+      setTimeout(() => {
+        if (data.is_finished && data.result) {
+          renderResult(data.result);
+          showScreen(screenResult);
+        } else if (data.next_question) {
+          renderQuestion(data.next_question);
+        }
+      }, 350);
+
+    } catch (err) {
+      console.error(err);
+      showToast('Ошибка связи с сервером при отправке ответа.');
+      isAnswering = false;
+      if (input) input.disabled = false;
+      if (btn) btn.disabled = false;
+    }
+  }
+
   async function selectOption(index) {
     if (isAnswering || !currentQuestion) return;
     isAnswering = true;

@@ -20,13 +20,21 @@ def run_e2e_test():
     final_result = None
     while q:
         question_count += 1
-        opt = (question_count % 3)
-        payload = json.dumps({
-            'session_id': session_id,
-            'question_id': q['id'],
-            'selected_option': opt,
-            'time_spent_seconds': 4.0
-        }).encode('utf-8')
+        if q.get('question_type') == 'text':
+            payload_obj = {
+                'session_id': session_id,
+                'question_id': q['id'],
+                'selected_text': 'answered',
+                'time_spent_seconds': 4.0
+            }
+        else:
+            payload_obj = {
+                'session_id': session_id,
+                'question_id': q['id'],
+                'selected_option': (question_count % 3),
+                'time_spent_seconds': 4.0
+            }
+        payload = json.dumps(payload_obj).encode('utf-8')
         r = urllib.request.urlopen(urllib.request.Request(
             'http://127.0.0.1:8000/api/test/answer',
             method='POST',

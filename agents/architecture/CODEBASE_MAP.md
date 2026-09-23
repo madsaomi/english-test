@@ -15,8 +15,8 @@ graph TD
     Main --> Static[static/ index.html, css, js]
 
     CAT --> Models
-    CAT --> Questions[backend/questions.py]
-    Questions --> Models
+    CAT --> Loader[backend/test_loader.py]
+    Loader --> TestData["tests_data/test_general_2026.json"]
 
     Bot --> Config
     Bot --> Models
@@ -34,7 +34,8 @@ graph TD
 | `backend/config.py` | Конфигурация | Чтение `.env` (`BOT_TOKEN`, `ADMIN_CHAT_ID`, `PORT`) | Значения по умолчанию |
 | `backend/models.py` | Схемы данных (Pydantic) | `Question`, `ClientQuestion`, `AnswerSubmission`, `TestResult` | **ВНИМАНИЕ:** Влияет на весь бэкенд и фронтенд! Проверь `main.py`, `cat_engine.py`, `app.js` |
 | `backend/cat_engine.py` | Логика тестирования | Класс `TestSession`, алгоритм CAT, расчет CEFR и рекомендаций | `test_simulation.py` и `test_e2e.py` |
-| `backend/questions.py` | Банк вопросов | Список `QUESTION_BANK` с вопросами A1–C2 | `len(QUESTION_BANK) >= 30`, корректность `correct_option` |
+| `backend/test_loader.py` | Загрузка тестов | `TestRepository`, `DEFAULT_TEST_ID`, чтение `tests_data/*.json` | Наличие `test_general_2026` в репозитории |
+| `tests_data/test_general_2026.json` | Основной тест | Единственный набор: 45 choice + 5 text (case-sensitive), `explanation` пустые | `check_integrity.py` раздел 4, `test_api_http`, `test_multi_suites` |
 | `backend/telegram_bot.py` | Telegram-бот | Хэндлеры aiogram 3.x, форматирование HTML-карточек | Доставку сообщений в Telegram |
 | `static/index.html` | Разметка UI | 3 экрана: `welcome`, `question`, `result`, Telegram SDK | Соответствие ID элементов скрипту `app.js` |
 | `static/css/style.css` | Стили | Glassmorphism, переменные палитры `:root`, медиа-запросы | Адаптивность в мобильном окне (<768px) |

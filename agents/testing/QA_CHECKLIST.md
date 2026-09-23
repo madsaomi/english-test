@@ -11,7 +11,7 @@
   ```powershell
   $env:PYTHONIOENCODING="utf-8"; python -m backend.test_simulation
   ```
-  *Критерий успеха:* Все 3 сценария (C2, A1, B1) сходятся без ошибок.
+  *Критерий успеха:* 3 сценария (точность 100% / 50% / 0%) на `test_general_2026` без ошибок.
 - [ ] Запущен сквозной E2E тест API:
   ```powershell
   python -m backend.test_e2e

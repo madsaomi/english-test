@@ -58,7 +58,7 @@ def export_leads(api_url: str = "http://127.0.0.1:8000"):
             "student_name": "Демо Студент",
             "phone": "+7 999 123-45-67",
             "telegram_username": "@student_tg",
-            "test_id": "cefr_adaptive",
+            "test_id": "test_general_2026",
             "cefr_level": "B2",
             "level_title": "B2 (Upper-Intermediate)",
             "score": 82,

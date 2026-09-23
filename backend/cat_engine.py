@@ -5,8 +5,7 @@ import time
 import logging
 from typing import Dict, List, Optional, Set
 from .models import Question, ClientQuestion, TestResult, SkillBreakdown, QuestionReviewItem
-from .questions import QUESTION_BANK
-from .test_loader import test_repository
+from .test_loader import test_repository, DEFAULT_TEST_ID
 
 logger = logging.getLogger("cat_engine")
 
@@ -27,7 +26,7 @@ def map_ability_to_cefr(ability: float):
     return "C2", "C2 (Mastery / Proficiency)", CEFR_LEVELS[-1][4]
 
 class TestSession:
-    def __init__(self, session_id: str, test_id: str = "cefr_adaptive"):
+    def __init__(self, session_id: str, test_id: str = DEFAULT_TEST_ID):
         self.session_id: str = session_id
         self.test_id: str = test_id
         self.test_title: str = "CEFR Adaptive Test"
@@ -52,11 +51,16 @@ class CATEngine:
     def __init__(self):
         self.sessions: Dict[str, TestSession] = {}
 
-    def create_session(self, test_id: str = "cefr_adaptive") -> TestSession:
+    def create_session(self, test_id: Optional[str] = None) -> TestSession:
         session_id = str(uuid.uuid4())
-        session = TestSession(session_id, test_id=test_id)
 
-        suite = test_repository.get_test_suite(test_id)
+        suite = test_repository.get_test_suite(test_id) if test_id else None
+        if not suite:
+            suite = test_repository.get_test_suite(test_repository.get_default_test_id())
+
+        resolved_id = suite.id if suite else (test_id or DEFAULT_TEST_ID)
+        session = TestSession(session_id, test_id=resolved_id)
+
         if suite:
             session.test_title = suite.title
             session.test_mode = suite.mode
@@ -73,6 +77,15 @@ class CATEngine:
 
         self.sessions[session_id] = session
         return session
+
+    def find_question(self, session: TestSession, question_id: str) -> Optional[Question]:
+        if session.current_question and session.current_question.id == question_id:
+            return session.current_question
+        q = next((item for item in session.curated_questions if item.id == question_id), None)
+        if q:
+            return q
+        pool = test_repository.get_all_questions_pool()
+        return next((item for item in pool if item.id == question_id), None)
 
     def get_session(self, session_id: str) -> Optional[TestSession]:
         return self.sessions.get(session_id)
@@ -134,27 +147,33 @@ class CATEngine:
             category=question.category,
             topic=question.topic,
             text=question.text,
+            question_type=question.question_type,
             options=question.options,
             current_difficulty_label=label,
         )
 
-    def submit_answer(self, session: TestSession, question_id: str, selected_option: int, time_spent: float) -> bool:
+    def submit_answer(
+        self,
+        session: TestSession,
+        question_id: str,
+        selected_option: Optional[int] = None,
+        time_spent: float = 0.0,
+        selected_text: Optional[str] = None,
+    ) -> bool:
         # Нормализация времени ответа: минимум 0.5 сек (защита от автокликеров, SECURITY_SPEC)
         time_spent = max(0.5, float(time_spent))
         session.last_activity = time.time()
 
-        if not session.current_question or session.current_question.id != question_id:
-            # Поиск в вопросах сессии или общем пуле
-            q = next((item for item in session.curated_questions if item.id == question_id), None)
-            if not q:
-                pool = test_repository.get_all_questions_pool()
-                q = next((item for item in pool if item.id == question_id), None)
-            if not q:
-                return False
-        else:
-            q = session.current_question
+        q = self.find_question(session, question_id)
+        if not q:
+            return False
 
-        is_correct = (selected_option == q.correct_option)
+        if q.question_type == "text":
+            given = (selected_text or "").strip()
+            expected = (q.correct_text or "").strip()
+            is_correct = bool(given) and given == expected
+        else:
+            is_correct = selected_option is not None and selected_option == q.correct_option
         
         # Динамический шаг коррекции: в начале теста шаг больше (быстрое нащупывание уровня),
         # к концу теста шаг меньше (точная калибровка)
@@ -180,6 +199,7 @@ class CATEngine:
         session.history.append({
             "question": q,
             "selected_option": selected_option,
+            "selected_text": selected_text,
             "is_correct": is_correct,
             "difficulty": q.difficulty,
             "ability_after": session.ability,
@@ -285,9 +305,12 @@ class CATEngine:
                 category=q_obj.category,
                 topic=q_obj.topic,
                 text=q_obj.text,
+                question_type=q_obj.question_type,
                 options=q_obj.options,
-                selected_option=h["selected_option"],
+                selected_option=h.get("selected_option"),
                 correct_option=q_obj.correct_option,
+                selected_text=h.get("selected_text"),
+                correct_text=q_obj.correct_text,
                 is_correct=h["is_correct"],
                 explanation=q_obj.explanation,
                 time_spent_seconds=round(float(h.get("time_spent", 0.0)), 1)

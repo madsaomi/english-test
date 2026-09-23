@@ -98,7 +98,7 @@ python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 │   ├── main.py                   # Единый сервер FastAPI + lifespan для aiogram
 │   ├── config.py                 # Загрузка настроек из .env
 │   ├── cat_engine.py             # Адаптивный движок CAT и расчет CEFR
-│   ├── questions.py              # Банк вопросов A1–C2 (Grammar, Vocab, Usage)
+│   ├── test_loader.py            # Загрузка тестов (test_general_2026 из tests_data/)
 │   ├── telegram_bot.py           # Бот aiogram 3.x и отправка отчетов
 │   ├── models.py                 # Pydantic модели данных
 │   ├── test_simulation.py        # Тест симуляции CAT

@@ -1,6 +1,8 @@
 # ✍️ Руководство по добавлению вопросов (QUESTION_AUTHORING_GUIDE.md)
 
-Этот документ регламентирует правила составления и калибровки новых вопросов для пополнения банка `backend/questions.py`.
+Этот документ регламентирует правила составления и калибровки новых вопросов для пополнения основного теста `tests_data/test_general_2026.json`.
+
+> **Политика проекта (TASK-012):** поле `explanation` всегда `""` — ученик видит только результат, подсказок и пояснений нет.
 
 ---
 
@@ -8,19 +10,42 @@
 
 Каждый вопрос обязан строго соответствовать схеме Pydantic модели `Question`:
 
-```python
-Question(
-    id="b2_g_04",                      # Уникальный строковый ID (уровень_категория_номер)
-    level="B2",                        # Точный уровень CEFR (A1, A2, B1, B2, C1, C2)
-    difficulty=4.2,                    # Дробная сложность (от 1.0 до 6.0)
-    category="Grammar",                # Строго: Grammar, Vocabulary или Usage
-    topic="Inversion",                 # Конкретная тема грамматики/лексики
-    text="Rarely ___ such dedication.",# Текст с пропуском '___'
-    options=["I saw", "have I seen", "I had seen", "did I saw"], # Ровно 4 варианта
-    correct_option=1,                  # 0-индексированный номер правильного ответа
-    explanation="Краткое понятное объяснение на русском языке для ученика"
-)
+### Вопрос с выбором ответа (`question_type: "choice"`)
+
+```json
+{
+  "id": "g26_46",
+  "level": "B2",
+  "difficulty": 4.2,
+  "category": "Grammar",
+  "topic": "Inversion",
+  "text": "Rarely ___ such dedication.",
+  "question_type": "choice",
+  "options": ["I saw", "have I seen", "I had seen", "did I saw"],
+  "correct_option": 1,
+  "explanation": ""
+}
 ```
+
+### Текстовый вопрос (`question_type: "text"`)
+
+```json
+{
+  "id": "g26_47",
+  "level": "A2",
+  "difficulty": 2.0,
+  "category": "Grammar",
+  "topic": "Past Continuous",
+  "text": "Helena ___ when I came home. (to read)",
+  "question_type": "text",
+  "options": [],
+  "correct_option": null,
+  "correct_text": "was reading",
+  "explanation": ""
+}
+```
+
+⚠️ `correct_text` сравнивается **с учётом регистра** (case-sensitive): `Was reading` ≠ `was reading`. Допускается только `.strip()` внешних пробелов.
 
 ---
 

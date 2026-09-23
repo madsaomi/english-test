@@ -7,7 +7,7 @@
 ## 1. Защита от списывания (Anti-Cheat)
 
 ### Разделение моделей `Question` и `ClientQuestion`:
-- В базе вопросов (`backend/questions.py`) хранится полная модель `Question`:
+- В наборе тестов (`tests_data/test_general_2026.json`) хранится полная модель `Question`:
   - `correct_option: int`
   - `explanation: str`
 - При выдаче вопроса клиенту через API (`cat_engine.to_client_question`) создается урезанная модель `ClientQuestion`:

@@ -1,7 +1,8 @@
 """HTTP-layer API tests using FastAPI TestClient.
 
 Проверяют реальный HTTP-стек: маршрутизацию, сериализацию JSON, CORS-заголовки,
-полный цикл фиксированного теста, а также криптографию initData (Telegram WebApp).
+полный цикл фиксированного теста (включая text-ответы и case-sensitivity),
+а также криптографию initData (Telegram WebApp).
 """
 
 import sys
@@ -27,6 +28,7 @@ def test_health_endpoint():
     data = res.json()
     assert data["status"] == "ok"
     assert data["total_questions_in_bank"] >= 25
+    assert data["total_questions_in_bank"] == 50
     assert "active_sessions" in data
     print("[OK] HTTP test: /api/health")
 
@@ -36,10 +38,11 @@ def test_catalog_endpoint():
     res = client.get("/api/tests")
     assert res.status_code == 200
     metas = res.json()
-    assert len(metas) >= 4
-    assert metas[0]["id"] == "cefr_adaptive"
-    assert metas[0]["mode"] == "adaptive"
-    print("[OK] HTTP test: /api/tests catalog")
+    assert len(metas) == 1, f"Ожидался ровно 1 тест, получено {len(metas)}"
+    assert metas[0]["id"] == "test_general_2026"
+    assert metas[0]["mode"] == "fixed"
+    assert metas[0]["total_questions"] == 50
+    print("[OK] HTTP test: /api/tests catalog (single suite)")
 
 
 def test_cors_wildcard_default():
@@ -50,41 +53,119 @@ def test_cors_wildcard_default():
     print("[OK] HTTP test: CORS wildcard default")
 
 
-def test_fixed_business_run_over_http():
-    client = TestClient(app)
-    start = client.post("/api/test/start", json={"test_id": "test_business_english"})
+def _answer_payload(qmodel, step: int, text_value: str = None):
+    if qmodel.question_type == "text":
+        value = text_value if text_value is not None else (qmodel.correct_text or "").strip()
+        return {"selected_text": value, "time_spent_seconds": 3.0}
+    if text_value is not None:
+        return {"selected_option": 0, "time_spent_seconds": 3.0}
+    return {"selected_option": qmodel.correct_option, "time_spent_seconds": 3.0}
+
+
+def _run_full(client, wrong_case_at_first_text: bool = False):
+    """Проводит тест до конца. Возвращает (session_id, final_result, text_case_correct)."""
+    start = client.post("/api/test/start", json={})
     assert start.status_code == 200
     data = start.json()
     sid = data["session_id"]
-    suite = test_repository.get_test_suite("test_business_english")
+    suite = test_repository.get_test_suite("test_general_2026")
 
     current_q = data["first_question"]
     step = 0
     final = None
-    while current_q and step < 8:
+    text_case_correct = None
+    used_wrong_case = False
+
+    while current_q and step < 60:
         qmodel = next(q for q in suite.questions if q.id == current_q["id"])
-        ans = client.post("/api/test/answer", json={
+        text_override = None
+        if (
+            wrong_case_at_first_text
+            and qmodel.question_type == "text"
+            and not used_wrong_case
+        ):
+            expected = (qmodel.correct_text or "").strip()
+            text_override = expected.upper() if expected != expected.upper() else expected.lower()
+            used_wrong_case = True
+
+        payload = {
             "session_id": sid,
             "question_id": current_q["id"],
-            "selected_option": qmodel.correct_option,
-            "time_spent_seconds": 3.0
-        })
-        assert ans.status_code == 200
+            **_answer_payload(qmodel, step, text_override),
+        }
+        ans = client.post("/api/test/answer", json=payload)
+        assert ans.status_code == 200, ans.text
         body = ans.json()
+        if text_override is not None:
+            text_case_correct = body["is_correct"]
         if body["is_finished"]:
             final = body["result"]
             break
         current_q = body["next_question"]
         step += 1
 
-    assert final is not None, "Фиксированный тест должен завершиться"
-    assert final["total_questions"] == 8
+    assert final is not None, "Тест должен завершиться"
+    return sid, final, text_case_correct
+
+
+def test_fixed_general_run_over_http():
+    client = TestClient(app)
+    sid, final, _ = _run_full(client)
+    assert final["total_questions"] == 50
+    assert final["accuracy_percentage"] == 100
     assert final["cefr_description"], "Описание CEFR должно присутствовать в результате"
+    assert len(final["review"]) == 50
 
     res = client.get(f"/api/test/result/{sid}")
     assert res.status_code == 200
     assert res.json()["session_id"] == sid
-    print("[OK] HTTP test: full fixed business run")
+    print("[OK] HTTP test: full fixed general run (50/50 correct)")
+
+
+def test_text_answer_case_sensitive():
+    client = TestClient(app)
+    _, final, text_case_correct = _run_full(client, wrong_case_at_first_text=True)
+    assert text_case_correct is False, "Ответ с другим регистром должен быть неверным"
+    # 49 из 50 верно (первый text-ответ намеренно с неверным регистром)
+    assert final["correct_count"] == 49, f"Ожидалось 49, получено {final['correct_count']}"
+    assert final["accuracy_percentage"] == 98
+    print("[OK] HTTP test: text answers are case-sensitive")
+
+
+def test_text_answer_empty_rejected():
+    client = TestClient(app)
+    start = client.post("/api/test/start", json={})
+    data = start.json()
+    sid = data["session_id"]
+    suite = test_repository.get_test_suite("test_general_2026")
+    text_q = next(q for q in suite.questions if q.question_type == "text")
+
+    res = client.post("/api/test/answer", json={
+        "session_id": sid,
+        "question_id": text_q.id,
+        "selected_text": "   ",
+        "time_spent_seconds": 1.0,
+    })
+    assert res.status_code == 400
+    assert "Введите ответ" in res.json()["detail"]
+    print("[OK] HTTP test: empty text answer rejected with 400")
+
+
+def test_choice_without_option_rejected():
+    client = TestClient(app)
+    start = client.post("/api/test/start", json={})
+    data = start.json()
+    sid = data["session_id"]
+    choice_q_id = data["first_question"]["id"]
+
+    res = client.post("/api/test/answer", json={
+        "session_id": sid,
+        "question_id": choice_q_id,
+        "time_spent_seconds": 1.0,
+    })
+    assert res.status_code == 400
+    assert "Не выбран вариант" in res.json()["detail"]
+    print("[OK] HTTP test: choice without selected_option rejected with 400")
 
 
 def test_leads_endpoint():
@@ -100,10 +181,11 @@ def test_start_unknown_test_falls_back():
     res = client.post("/api/test/start", json={"test_id": "not_existing_suite"})
     assert res.status_code == 200
     assert res.json()["session_id"]
-    print("[OK] HTTP test: unknown suite fallback")
+    assert res.json()["test_title"] == "General English Test 2026"
+    print("[OK] HTTP test: unknown suite falls back to default")
 
 
-def _complete_fixed_business(client, test_id: str = "test_business_english"):
+def _complete_fixed(client, test_id: str = "test_general_2026"):
     """Проводит фиксированный тест до конца, возвращает session_id."""
     start = client.post("/api/test/start", json={"test_id": test_id})
     data = start.json()
@@ -111,13 +193,12 @@ def _complete_fixed_business(client, test_id: str = "test_business_english"):
     suite = test_repository.get_test_suite(test_id)
     current_q = data["first_question"]
     step = 0
-    while current_q and step < 8:
+    while current_q and step < 60:
         qmodel = next(q for q in suite.questions if q.id == current_q["id"])
         ans = client.post("/api/test/answer", json={
             "session_id": sid,
             "question_id": current_q["id"],
-            "selected_option": qmodel.correct_option,
-            "time_spent_seconds": 3.0
+            **_answer_payload(qmodel, step),
         })
         body = ans.json()
         if body["is_finished"]:
@@ -129,7 +210,7 @@ def _complete_fixed_business(client, test_id: str = "test_business_english"):
 
 def test_contact_requires_name_and_phone():
     client = TestClient(app)
-    sid = _complete_fixed_business(client)
+    sid = _complete_fixed(client)
 
     res = client.post("/api/test/submit-contact", json={"session_id": sid, "name": "Тест Тестов"})
     assert res.status_code == 400
@@ -146,7 +227,7 @@ def test_contact_requires_name_and_phone():
 
 def test_contact_persist_and_export():
     client = TestClient(app)
-    sid = _complete_fixed_business(client)
+    sid = _complete_fixed(client)
 
     resp = client.post("/api/test/submit-contact", json={
         "session_id": sid,
@@ -193,7 +274,7 @@ def test_init_data_validation():
 
     pairs = [
         ("auth_date", "1700000000"),
-        ("query_id", "AAHdF6IQAAAAAN0XohDhrOrc"),
+        ("query_id", "AAHdF6IQAAAAAN0XohDhr3Qrc"),
         ("user", '{"id":42,"first_name":"Test"}'),
     ]
     check_string = "\n".join(f"{k}={v}" for k, v in sorted(pairs))
@@ -213,7 +294,10 @@ if __name__ == "__main__":
     test_health_endpoint()
     test_catalog_endpoint()
     test_cors_wildcard_default()
-    test_fixed_business_run_over_http()
+    test_fixed_general_run_over_http()
+    test_text_answer_case_sensitive()
+    test_text_answer_empty_rejected()
+    test_choice_without_option_rejected()
     test_leads_endpoint()
     test_start_unknown_test_falls_back()
     test_contact_requires_name_and_phone()

@@ -83,64 +83,91 @@ def run_integrity_check():
             errors_count += 1
         log_check(f"Шаблон {tpl}", exists, "Шаблон отсутствует!")
 
-    # 4. Проверка банка вопросов CEFR
-    print(f"\n{BOLD}4. Проверка валидности банка вопросов (questions.py):{RESET}")
+# 4. Проверка валидности основного теста (tests_data/test_general_2026.json)
+    print(f"\n{BOLD}4. Проверка валидности основного теста (test_general_2026):{RESET}")
     try:
-        sys.path.insert(0, str(BASE_DIR))
-        from backend.questions import QUESTION_BANK
-        
-        has_min_questions = len(QUESTION_BANK) >= 25
-        if not has_min_questions:
-            errors_count += 1
-        log_check(f"Количество вопросов в банке: {len(QUESTION_BANK)} (минимум 25)", has_min_questions)
-
-        # Проверка всех уровней CEFR
-        levels_present = set(q.level for q in QUESTION_BANK)
-        all_cefr_levels = {"A1", "A2", "B1", "B2", "C1", "C2"}
-        missing_levels = all_cefr_levels - levels_present
-        cefr_ok = (len(missing_levels) == 0)
-        if not cefr_ok:
-            errors_count += 1
-        log_check(f"Охват всех уровней CEFR (A1-C2)", cefr_ok, f"Отсутствуют уровни: {missing_levels}")
-
-        # Проверка валидности индексов correct_option
-        invalid_options = [q.id for q in QUESTION_BANK if not (0 <= q.correct_option < len(q.options))]
-        options_ok = (len(invalid_options) == 0)
-        if not options_ok:
-            errors_count += 1
-        log_check("Валидность индексов ответов (0 <= index < len)", options_ok, f"Ошибки в вопросах: {invalid_options}")
-
-        # Проверка уникальности ID
-        ids = [q.id for q in QUESTION_BANK]
-        unique_ids = (len(ids) == len(set(ids)))
-        if not unique_ids:
-            errors_count += 1
-        log_check("Уникальность ID всех вопросов", unique_ids, "Обнаружены дубликаты ID!")
-
-        # Проверка синхронизации банков: questions.py <-> tests_data/cefr_adaptive_bank.json
         import json as _json
-        bank_file = BASE_DIR / "tests_data" / "cefr_adaptive_bank.json"
-        if bank_file.exists():
-            try:
-                with open(bank_file, encoding="utf-8") as _f:
-                    _raw = _json.load(_f)
-                json_ids = [q["id"] for q in _raw.get("questions", [])]
-                py_ids = [q.id for q in QUESTION_BANK]
-                banks_synced = (json_ids == py_ids)
-                if not banks_synced:
-                    errors_count += 1
-                log_check("Синхронизация банков (questions.py <-> cefr_adaptive_bank.json)", banks_synced,
-                          "Расхождение ID вопросов между двумя источниками правды!")
-            except Exception as e:
-                errors_count += 1
-                log_check("Синхронизация банков (questions.py <-> cefr_adaptive_bank.json)", False, str(e))
-        else:
+
+        bank_file = BASE_DIR / "tests_data" / "test_general_2026.json"
+        if not bank_file.exists():
             errors_count += 1
-            log_check("Файл tests_data/cefr_adaptive_bank.json", False, "Файл отсутствует")
+            log_check("Файл tests_data/test_general_2026.json", False, "Файл отсутствует")
+        else:
+            with open(bank_file, encoding="utf-8") as _f:
+                raw = _json.load(_f)
+
+            suite_id_ok = raw.get("id") == "test_general_2026"
+            if not suite_id_ok:
+                errors_count += 1
+            log_check("id набора == test_general_2026", suite_id_ok, f"Получен id: {raw.get('id')}")
+
+            mode_ok = raw.get("mode") == "fixed"
+            if not mode_ok:
+                errors_count += 1
+            log_check("mode == fixed", mode_ok, f"Получен mode: {raw.get('mode')}")
+
+            questions = raw.get("questions", [])
+            has_min_questions = len(questions) >= 50
+            if not has_min_questions:
+                errors_count += 1
+            log_check(f"Количество вопросов: {len(questions)} (минимум 50)", has_min_questions)
+
+            ids = [q.get("id") for q in questions]
+            unique_ids = (len(ids) == len(set(ids)))
+            if not unique_ids:
+                errors_count += 1
+            log_check("Уникальность ID всех вопросов", unique_ids, "Обнаружены дубликаты ID!")
+
+            all_cefr_levels = {"A1", "A2", "B1", "B2", "C1", "C2"}
+            levels = {q.get("level") for q in questions}
+            levels_valid = levels and levels <= all_cefr_levels
+            if not levels_valid:
+                errors_count += 1
+            log_check("Все level из набора CEFR (A1-C2)", bool(levels_valid), f"Лишние уровни: {levels - all_cefr_levels}")
+
+            distinct_ok = len(levels) >= 4
+            if not distinct_ok:
+                errors_count += 1
+            log_check(f"Разные уровни сложности (минимум 4, есть {len(levels)})", distinct_ok, f"Найдено уровней: {sorted(levels)}")
+
+            choice_qs = [q for q in questions if q.get("question_type", "choice") == "choice"]
+            text_qs = [q for q in questions if q.get("question_type") == "text"]
+
+            bad_choice = []
+            for q in choice_qs:
+                opts = q.get("options") or []
+                co = q.get("correct_option")
+                if len(opts) != 4 or co is None or not (0 <= co < len(opts)):
+                    bad_choice.append(q.get("id"))
+            choice_ok = len(choice_qs) == 45 and not bad_choice
+            if not choice_ok:
+                errors_count += 1
+            log_check(f"Choice-вопросы: {len(choice_qs)} шт., валидные correct_option", choice_ok, f"Проблемы: {bad_choice}")
+
+            bad_text = [q.get("id") for q in text_qs if not (q.get("correct_text") or "").strip() or q.get("correct_option") is not None]
+            text_ok = len(text_qs) == 5 and not bad_text
+            if not text_ok:
+                errors_count += 1
+            log_check(f"Text-вопросы: {len(text_qs)} шт., непустой correct_text, без correct_option", text_ok, f"Проблемы: {bad_text}")
+
+            # Loader действительно загружает набор
+            sys.path.insert(0, str(BASE_DIR))
+            from backend.test_loader import test_repository
+            loaded_ok = test_repository.get_test_suite("test_general_2026") is not None
+            if not loaded_ok:
+                errors_count += 1
+            log_check("TestRepository загружает test_general_2026", loaded_ok, "Набор не найден в репозитории")
+
+            # Единственность наборов (автотесты удалены)
+            only_one = len(test_repository.test_suites) == 1
+            if not only_one:
+                errors_count += 1
+            log_check("В каталоге ровно 1 тест (main suite)", only_one,
+                      f"Найдено наборов: {list(test_repository.test_suites)}")
 
     except Exception as e:
         errors_count += 1
-        log_check("Импорт backend.questions", False, str(e))
+        log_check("Загрузка/валидация test_general_2026.json", False, str(e))
 
     # 5. Проверка фронтенда
     print(f"\n{BOLD}5. Проверка файлов фронтенда (static/):{RESET}")

@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from .models import Question, TestSuite, TestSuiteMeta
-from .questions import QUESTION_BANK
 
 logger = logging.getLogger("test_loader")
 
 TESTS_DATA_DIR = Path(__file__).resolve().parent.parent / "tests_data"
+DEFAULT_TEST_ID = "test_general_2026"
 
 class TestRepository:
     def __init__(self, data_dir: Path = TESTS_DATA_DIR):
@@ -18,7 +18,7 @@ class TestRepository:
 
     def reload_all_tests(self) -> int:
         self.test_suites.clear()
-        
+
         if not self.data_dir.exists():
             logger.warning(f"Папка с тестами {self.data_dir} не найдена. Создаю папку.")
             self.data_dir.mkdir(parents=True, exist_ok=True)
@@ -61,36 +61,20 @@ class TestRepository:
             except Exception as e:
                 logger.error(f"Ошибка загрузки теста из {file_path.name}: {e}")
 
-        # Если cefr_adaptive не найден в файлах, собираем из дефолтного банка
-        if "cefr_adaptive" not in self.test_suites:
-            default_adaptive = TestSuite(
-                id="cefr_adaptive",
-                title="CEFR General Adaptive Test",
-                description="Адаптивное тестирование уровня языка от A1 до C2 с динамической подстройкой сложности.",
-                category="General",
-                level="A1-C2",
-                mode="adaptive",
-                icon="🎯",
-                estimated_time_minutes=7,
-                total_questions=len(QUESTION_BANK),
-                questions=QUESTION_BANK
-            )
-            self.test_suites["cefr_adaptive"] = default_adaptive
-
         return loaded_count
 
+    def get_default_test_id(self) -> str:
+        if DEFAULT_TEST_ID in self.test_suites:
+            return DEFAULT_TEST_ID
+        if self.test_suites:
+            return next(iter(self.test_suites))
+        return DEFAULT_TEST_ID
+
     def get_all_tests_meta(self) -> List[TestSuiteMeta]:
-        meta_list = []
-        # Адаптивный тест всегда первым
-        if "cefr_adaptive" in self.test_suites:
-            suite = self.test_suites["cefr_adaptive"]
-            meta_list.append(TestSuiteMeta(**suite.model_dump(exclude={"questions"})))
-
-        for suite_id, suite in self.test_suites.items():
-            if suite_id != "cefr_adaptive":
-                meta_list.append(TestSuiteMeta(**suite.model_dump(exclude={"questions"})))
-
-        return meta_list
+        return [
+            TestSuiteMeta(**suite.model_dump(exclude={"questions"}))
+            for suite in self.test_suites.values()
+        ]
 
     def get_test_suite(self, test_id: str) -> Optional[TestSuite]:
         return self.test_suites.get(test_id)
@@ -101,10 +85,6 @@ class TestRepository:
             for q in suite.questions:
                 if q.id not in pool:
                     pool[q.id] = q
-        # Добавляем вопросы из questions.py если их еще нет
-        for q in QUESTION_BANK:
-            if q.id not in pool:
-                pool[q.id] = q
         return list(pool.values())
 
 test_repository = TestRepository()

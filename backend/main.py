@@ -24,7 +24,7 @@ from .models import (
     TestSuiteMeta
 )
 from .cat_engine import cat_engine
-from .test_loader import test_repository
+from .test_loader import test_repository, DEFAULT_TEST_ID
 from .telegram_bot import bot, dp, send_admin_lead_notification, send_student_full_result
 from .lead_store import lead_store, LeadRecord
 
@@ -147,7 +147,7 @@ async def list_available_tests():
 
 @app.post("/api/test/start", response_model=StartTestResponse)
 async def start_test(payload: Optional[StartTestRequest] = None):
-    test_id = payload.test_id if payload and payload.test_id else "cefr_adaptive"
+    test_id = payload.test_id if payload and payload.test_id else None
     session = cat_engine.create_session(test_id=test_id)
     first_q = cat_engine.select_next_question(session)
     if not first_q:
@@ -176,11 +176,23 @@ async def answer_question(payload: AnswerSubmission):
     if session.is_finished:
         raise HTTPException(status_code=400, detail="Тест уже завершен")
 
+    question = cat_engine.find_question(session, payload.question_id)
+    if not question:
+        raise HTTPException(status_code=404, detail="Вопрос не найден")
+
+    if question.question_type == "text":
+        if payload.selected_text is None or not payload.selected_text.strip():
+            raise HTTPException(status_code=400, detail="Введите ответ")
+    else:
+        if payload.selected_option is None:
+            raise HTTPException(status_code=400, detail="Не выбран вариант ответа")
+
     is_correct = cat_engine.submit_answer(
         session=session,
         question_id=payload.question_id,
         selected_option=payload.selected_option,
-        time_spent=payload.time_spent_seconds
+        time_spent=payload.time_spent_seconds,
+        selected_text=payload.selected_text,
     )
 
     should_end = cat_engine.should_finish(session)

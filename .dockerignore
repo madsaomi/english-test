@@ -9,3 +9,11 @@ venv/
 .git/
 .gitignore
 .gemini/
+.env
+data/
+exports/
+.github/
+*.docx
+render.yaml
+railway.json
+docker-compose.yml

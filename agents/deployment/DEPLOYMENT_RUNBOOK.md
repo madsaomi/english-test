@@ -111,3 +111,33 @@ sudo systemctl restart nginx
 sudo certbot --nginx -d english-test.yourdomain.com
 ```
 Certbot автоматически сконфигурирует SSL и настроит автопродление. Теперь ваш Telegram WebApp работает на максимальной скорости и безопасности!
+
+---
+
+## ☁️ Способ 3: Деплой на Railway
+
+Конфигурация уже в репозитории: `railway.json` (Dockerfile-билд, healthcheck `/api/health`, restart `ON_FAILURE` ×5) и `Dockerfile` (слушает `${PORT:-8000}`, копирует `tests_data/`).
+
+### 1. Создание проекта
+1. Откройте [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → `madsaomi/english-test`.
+2. Railway сам подхватит `railway.json` и соберёт Docker-образ.
+
+### 2. Variables (секреты — только в dashboard, не в git)
+| Key | Значение |
+|---|---|
+| `BOT_TOKEN` | токен от @BotFather (пусто = демо-режим, сайт работает без бота) |
+| `ADMIN_CHAT_ID` | ID чата для карточек лидов |
+| `WEBAPP_URL` | `https://<service>.up.railway.app` (после Generate Domain) |
+| `ALLOWED_ORIGINS` | тот же URL через запятую, если нужен строгий CORS |
+
+`PORT` Railway задаёт сам — руками не указывать.
+
+### 3. Публичный домен
+**Settings → Networking → Generate Domain** → получите `https://....up.railway.app` → впишите в `WEBAPP_URL` (и при необходимости `ALLOWED_ORIGINS`) → redeploy.
+
+### 4. Проверка
+- `GET /api/health` → `status: ok`, `total_questions_in_bank: 50`
+- `GET /api/tests` → один набор `test_general_2026`
+
+### ⚠️ Если аккаунт в restriction («ToS Violation»)
+Railway банит по risk-score аккаунта (регион/IP/платёжка), а не по коду этого репо. Конфиг это не обходит: напишите в support или используйте Способ 2 (VPS).

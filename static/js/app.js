@@ -184,6 +184,73 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 4000);
   }
 
+  // POST /api/test/answer with clear error classification + one retry on blip.
+  // Returns parsed JSON body; throws { status, detail, sessionLost }.
+  async function postAnswer(payload, { retries = 1 } = {}) {
+    let lastErr = null;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      let response;
+      try {
+        response = await fetch('/api/test/answer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (networkErr) {
+        lastErr = { status: 0, detail: 'network', sessionLost: false, cause: networkErr };
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 600));
+          continue;
+        }
+        break;
+      }
+
+      if (response.ok) {
+        return response.json();
+      }
+
+      let detail = '';
+      try {
+        const body = await response.json();
+        detail = body.detail || '';
+      } catch (_) { /* non-JSON error body */ }
+
+      const status = response.status;
+      const sessionLost = status === 404 && String(detail).includes('Сессия');
+      lastErr = { status, detail, sessionLost };
+
+      // Retry only transient gateway/network failures — never 4xx.
+      const retryable = status === 0 || status === 502 || status === 503;
+      if (retryable && attempt < retries) {
+        await new Promise((r) => setTimeout(r, 600));
+        continue;
+      }
+      break;
+    }
+    throw lastErr || { status: 0, detail: 'unknown', sessionLost: false };
+  }
+
+  function describeAnswerError(err) {
+    if (!err) return 'Ошибка связи с сервером при отправке ответа.';
+    if (err.sessionLost || (err.status === 404 && String(err.detail || '').includes('Сессия'))) {
+      return 'Сессия истекла (сервер перезапустился). Начните тест заново.';
+    }
+    if (err.status === 404) return err.detail || 'Вопрос не найден. Обновите страницу.';
+    if (err.status === 400) return err.detail || 'Некорректный ответ. Попробуйте ещё раз.';
+    if (err.status >= 500) return 'Сервер временно недоступен. Повторите попытку.';
+    if (err.status === 0) return 'Нет связи с сервером. Проверьте интернет и повторите.';
+    return err.detail || 'Ошибка связи с сервером при отправке ответа.';
+  }
+
+  function handleAnswerError(err) {
+    console.error('answer error', err);
+    showToast(describeAnswerError(err));
+    isAnswering = false;
+    if (err && err.sessionLost) {
+      resetToWelcome();
+    }
+  }
+
   // Keyboard navigation for options (A, B, C, D or 1, 2, 3, 4).
   // Используем e.code (физические клавиши), чтобы работало и на русской раскладке.
   window.addEventListener('keydown', (e) => {
@@ -470,19 +537,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btn) btn.disabled = true;
 
     try {
-      const response = await fetch('/api/test/answer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId,
-          question_id: currentQuestion.id,
-          selected_text: value,
-          time_spent_seconds: timeSpent
-        })
+      const data = await postAnswer({
+        session_id: sessionId,
+        question_id: currentQuestion.id,
+        selected_text: value,
+        time_spent_seconds: timeSpent
       });
-
-      if (!response.ok) throw new Error('Ошибка отправки ответа');
-      const data = await response.json();
 
       setTimeout(() => {
         if (data.is_finished && data.result) {
@@ -494,11 +554,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 350);
 
     } catch (err) {
-      console.error(err);
-      showToast('Ошибка связи с сервером при отправке ответа.');
-      isAnswering = false;
-      if (input) input.disabled = false;
-      if (btn) btn.disabled = false;
+      handleAnswerError(err);
+      if (input && !err?.sessionLost) input.disabled = false;
+      if (btn && !err?.sessionLost) btn.disabled = false;
     }
   }
 
@@ -521,19 +579,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     try {
-      const response = await fetch('/api/test/answer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId,
-          question_id: currentQuestion.id,
-          selected_option: index,
-          time_spent_seconds: timeSpent
-        })
+      const data = await postAnswer({
+        session_id: sessionId,
+        question_id: currentQuestion.id,
+        selected_option: index,
+        time_spent_seconds: timeSpent
       });
-
-      if (!response.ok) throw new Error('Ошибка отправки ответа');
-      const data = await response.json();
 
       // Small pause for smooth UX transition
       setTimeout(() => {
@@ -546,14 +597,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 350);
 
     } catch (err) {
-      console.error(err);
-      showToast('Ошибка связи с сервером при отправке ответа.');
-      isAnswering = false;
-      document.querySelectorAll('.option-card').forEach(c => {
-        c.style.pointerEvents = '';
-      });
-      const sel = document.getElementById(`option-${index}`);
-      if (sel) sel.classList.remove('selected');
+      handleAnswerError(err);
+      if (err && !err.sessionLost) {
+        document.querySelectorAll('.option-card').forEach(c => {
+          c.style.pointerEvents = '';
+        });
+        const sel = document.getElementById(`option-${index}`);
+        if (sel) sel.classList.remove('selected');
+      }
     }
   }
 

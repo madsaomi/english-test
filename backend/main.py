@@ -172,12 +172,20 @@ class AnswerResponse(BaseModel):
 async def answer_question(payload: AnswerSubmission):
     session = cat_engine.get_session(payload.session_id)
     if not session:
+        logger.warning(
+            "404 answer: session not found sid=%s qid=%s (restart or expired?)",
+            payload.session_id, payload.question_id,
+        )
         raise HTTPException(status_code=404, detail="Сессия тестирования не найдена")
     if session.is_finished:
         raise HTTPException(status_code=400, detail="Тест уже завершен")
 
     question = cat_engine.find_question(session, payload.question_id)
     if not question:
+        logger.warning(
+            "404 answer: question not found sid=%s qid=%s",
+            payload.session_id, payload.question_id,
+        )
         raise HTTPException(status_code=404, detail="Вопрос не найден")
 
     if question.question_type == "text":

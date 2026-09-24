@@ -133,7 +133,7 @@
       "difficulty": 1.4,
       "category": "Grammar",
       "topic": "Verb To Be Past",
-      "text": "Aziz __ not at the party yesterday.",
+      "text": "Aziz ___ not at the party yesterday.",
       "question_type": "choice",
       "options": [
         "is",
@@ -150,7 +150,7 @@
       "difficulty": 1.8,
       "category": "Grammar",
       "topic": "Offers & Invitations",
-      "text": "___ a cup of cappuccino? -  Yes, please.",
+      "text": "___ a cup of cappuccino? – Yes, please.",
       "question_type": "choice",
       "options": [
         "Do you like",
@@ -201,7 +201,7 @@
       "difficulty": 1.7,
       "category": "Usage",
       "topic": "Adverbs of Frequency",
-      "text": "Manzura: \"Do you listen to classical music?\" Aybek: \"No, ___ . I hate it\"",
+      "text": "Manzura: \"Do you listen to classical music?\" Aybek: \"No, ___. I hate it.\"",
       "question_type": "choice",
       "options": [
         "never",
@@ -235,7 +235,7 @@
       "difficulty": 1.5,
       "category": "Grammar",
       "topic": "Prepositions of Place",
-      "text": "Alan’s computer is  ___  the table, next to the TV.",
+      "text": "Alan’s computer is ___ the table, next to the TV.",
       "question_type": "choice",
       "options": [
         "beside",
@@ -422,7 +422,7 @@
       "difficulty": 2.2,
       "category": "Grammar",
       "topic": "Infinitive",
-      "text": "My parents encouraged me ___ their path and become a doctor..",
+      "text": "My parents encouraged me ___ their path and become a doctor.",
       "question_type": "choice",
       "options": [
         "follow",
@@ -575,7 +575,7 @@
       "difficulty": 2.7,
       "category": "Grammar",
       "topic": "remember + Gerund",
-      "text": "I remember ___the door. Don’t worry!",
+      "text": "I remember ___ the door. Don’t worry!",
       "question_type": "choice",
       "options": [
         "to lock",
@@ -677,7 +677,7 @@
       "difficulty": 3.2,
       "category": "Vocabulary",
       "topic": "Phrasal Verbs",
-      "text": "Mekhri was ___by her grandmother.",
+      "text": "Mekhri was ___ by her grandmother.",
       "question_type": "choice",
       "options": [
         "brought up",
@@ -694,7 +694,7 @@
       "difficulty": 3.0,
       "category": "Vocabulary",
       "topic": "Work & Experience",
-      "text": "People with no previous ___need not apply.",
+      "text": "People with no previous ___ need not apply.",
       "question_type": "choice",
       "options": [
         "experiment",
@@ -711,7 +711,7 @@
       "difficulty": 3.0,
       "category": "Vocabulary",
       "topic": "Collocations (transport)",
-      "text": "After the plane ___off, he was able to relax and start to enjoy the flight.",
+      "text": "After the plane ___ off, he was able to relax and start to enjoy the flight.",
       "question_type": "choice",
       "options": [
         "went",
@@ -831,7 +831,7 @@
       "difficulty": 2.8,
       "category": "Grammar",
       "topic": "Present Perfect Continuous",
-      "text": "Come on! It is 7 pm. I ___ for you for an hour.  (to wait)",
+      "text": "Come on! It is 7 pm. I ___ for you for an hour. (to wait)",
       "question_type": "text",
       "options": [],
       "correct_option": null,

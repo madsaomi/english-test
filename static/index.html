@@ -2,58 +2,100 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>English Level CAT — General English Test 2026 (CEFR A1–C2)</title>
-  <meta name="description" content="Узнайте свой реальный уровень английского языка (CEFR: A1-C2) на тесте из 50 вопросов с отправкой результата в Telegram.">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Stanford Language Center — English Test (CEFR A1–C1)</title>
+  <meta name="description" content="Онлайн-тест английского Stanford Language Center: 50 вопросов, уровень CEFR A1–C1, результат в Telegram.">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="apple-touch-icon" href="/logo.png">
 
-  <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="English Level CAT — General English Test 2026 (CEFR A1–C2)">
-  <meta property="og:description" content="Пройдите тест на 50 вопросов и узнайте уровень английского. Результат получите у администратора.">
+  <meta property="og:title" content="Stanford Language Center — English Test">
+  <meta property="og:description" content="Пройдите тест на 50 вопросов и узнайте свой уровень английского по шкале CEFR.">
+  <meta property="og:image" content="/logo.png">
   <meta property="og:locale" content="ru_RU">
   <meta name="twitter:card" content="summary">
-  
-  <!-- Google Fonts: Inter & Lora -->
+  <meta name="twitter:image" content="/logo.png">
+  <meta name="theme-color" content="#ffba08">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
-  
-  <!-- Telegram WebApp SDK -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div class="app-container">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="logo">
-        <span class="logo-badge">CAT</span>
-        <span class="logo-text">Lingua<span>Adaptive</span></span>
+  <header class="site-header">
+    <div class="brand">
+      <a class="brand-chip" href="#" aria-label="Stanford Language Center">
+        <img src="/logo.png" alt="Stanford Language Center" width="72" height="72">
+      </a>
+      <div class="brand-wordmark" aria-hidden="true">
+        <strong>Stanford</strong>
+        <span>language center</span>
       </div>
-    </header>
+    </div>
+    <a class="btn btn-dark header-cta" href="#start-test">Пройти тест <span class="arrow-icon">→</span></a>
+  </header>
 
+  <div class="app-container">
     <main class="main-content">
-      <!-- SCREEN 1: WELCOME SCREEN -->
-      <section class="screen active" id="screen-welcome">
-        <div class="hero-card">
-          <svg class="paperclip" viewBox="0 0 24 40" width="26" height="44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10v16a4 4 0 0 1-8 0V10a2.5 2.5 0 0 1 5 0v14a1 1 0 0 1-2 0V12"/></svg>
-          <h1 class="hero-title">Пройдите тест <span class="gradient-text">английского</span></h1>
-          <p class="hero-subtitle">50 вопросов · около 15 минут · результат получите у администратора</p>
+      <!-- SCREEN 1: WELCOME / CATALOG -->
+      <section class="screen active" id="screen-welcome" aria-labelledby="welcome-title">
+        <div class="hero-card" id="start-test">
+          <p class="eyebrow center">STANFORD LANGUAGE CENTER • OFFICIAL ASSESSMENT</p>
+          <h1 class="hero-title" id="welcome-title">Тестирование уровня <span class="highlight-text">английского</span></h1>
 
-          <!-- Test Selection Catalog -->
-          <div class="test-catalog-section">
+          <ul class="welcome-meta" aria-label="О тесте">
+            <li class="meta-item">
+              <div class="meta-icon-wrapper">
+                <svg class="meta-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+              </div>
+              <div class="meta-text">
+                <strong>50</strong><span>вопросов</span>
+              </div>
+            </li>
+            <li class="meta-item">
+              <div class="meta-icon-wrapper">
+                <svg class="meta-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              </div>
+              <div class="meta-text">
+                <strong>~15</strong><span>минут</span>
+              </div>
+            </li>
+            <li class="meta-item">
+              <div class="meta-icon-wrapper">
+                <svg class="meta-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+              <div class="meta-text">
+                <strong>6</strong><span>уровней</span>
+              </div>
+            </li>
+          </ul>
+
+          <div class="levels-strip" aria-label="Шкала уровней теста">
+            <span class="level-chip">Beginner</span>
+            <span class="level-arrow">›</span>
+            <span class="level-chip">Elementary</span>
+            <span class="level-arrow">›</span>
+            <span class="level-chip">Pre-Int</span>
+            <span class="level-arrow">›</span>
+            <span class="level-chip">Intermediate</span>
+            <span class="level-arrow">›</span>
+            <span class="level-chip">Upper-Int</span>
+            <span class="level-arrow">›</span>
+            <span class="level-chip highlight">Advanced</span>
+          </div>
+
+          <div class="test-catalog-section is-hidden" aria-hidden="true">
             <div class="catalog-header">
               <h2 class="catalog-title">Выберите тест</h2>
             </div>
-            <div class="test-cards-grid" id="test-cards-grid">
-              <!-- Rendered dynamically by JS -->
-            </div>
+            <div class="test-cards-grid" id="test-cards-grid"></div>
           </div>
 
           <div class="action-wrap">
-            <button class="btn btn-primary btn-large" id="btn-start-test">
+            <button class="btn btn-dark btn-large" id="btn-start-test">
               <span id="btn-start-text">Начать тест</span>
               <span class="arrow-icon">→</span>
             </button>
@@ -61,13 +103,13 @@
         </div>
       </section>
 
-      <!-- SCREEN 2: QUESTION SCREEN -->
-      <section class="screen" id="screen-question">
+      <!-- SCREEN 2: QUESTION -->
+      <section class="screen screen-question" id="screen-question" aria-labelledby="q-text">
         <div class="test-topbar">
           <div class="progress-info">
-            <span class="q-number" id="q-counter">Вопрос 1 из ~12</span>
+            <span class="q-number" id="q-counter">Вопрос 1 из ~50</span>
           </div>
-          <div class="timer-badge" id="timer-badge">
+          <div class="timer-badge" id="timer-badge" title="Время на вопрос">
             <span class="timer-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
             <span id="timer-text">00:00</span>
           </div>
@@ -75,33 +117,51 @@
 
         <div class="progress-dots" id="progress-dots" aria-hidden="true"></div>
 
-        <div class="progress-bar-container">
+        <div class="progress-bar-container"
+             role="progressbar"
+             aria-valuemin="0"
+             aria-valuemax="100"
+             aria-valuenow="8"
+             aria-label="Прогресс теста">
           <div class="progress-bar-fill" id="progress-fill" style="width: 8%;"></div>
         </div>
 
-        <div class="question-card" id="question-card">
-          <h2 class="question-text" id="q-text">Loading question...</h2>
-
+        <div class="question-card" id="question-card" tabindex="-1">
+          <div class="question-header-row">
+            <p class="eyebrow">ВОПРОС</p>
+            <span class="stanford-mini-tag">STANFORD</span>
+          </div>
+          <h2 class="question-text" id="q-text">
+            <div class="skeleton-line sk-q-line"></div>
+            <div class="skeleton-line sk-q-line-short"></div>
+          </h2>
           <div class="options-grid" id="options-container">
-            <!-- Options populated by JS -->
+            <div class="option-card skeleton"><div class="skeleton-line sk-opt-line"></div></div>
+            <div class="option-card skeleton"><div class="skeleton-line sk-opt-line"></div></div>
+            <div class="option-card skeleton"><div class="skeleton-line sk-opt-line"></div></div>
+            <div class="option-card skeleton"><div class="skeleton-line sk-opt-line"></div></div>
           </div>
         </div>
       </section>
 
-      <!-- SCREEN 3: RESULT SCREEN -->
-      <section class="screen" id="screen-result">
+      <!-- SCREEN 3: RESULT / CONTACT -->
+      <section class="screen" id="screen-result" aria-labelledby="result-title">
         <div class="result-card">
           <div class="result-header-text">
-            <h2 class="result-title">Тестирование завершено</h2>
+            <div class="completion-badge">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <p class="eyebrow center">ТЕСТИРОВАНИЕ ЗАВЕРШЕНО</p>
+            <h2 class="result-title" id="result-title">Оставьте ваши контакты</h2>
+            <p class="result-sub">Карточка с вашим уровнем и рекомендациями поступит администратору</p>
           </div>
 
-          <!-- Telegram notification form -->
           <div class="telegram-action-box">
             <div class="tg-box-header">
-              <div class="tg-icon-badge"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></div>
+              <div class="tg-icon-badge" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></div>
               <div>
-                <h3>Оставьте ваши контакты</h3>
-                <p>Результат получит администратор</p>
+                <h3>Отправка в Stanford</h3>
+                <p>Результат сразу появится у администратора</p>
               </div>
             </div>
 
@@ -109,23 +169,37 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="input-user-name">Ваше имя *</label>
-                  <input type="text" id="input-user-name" placeholder="Например: Иван" required>
+                  <div class="input-with-icon">
+                    <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <input type="text" id="input-user-name" placeholder="Например: Иван" autocomplete="name" required>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label for="input-user-phone">Телефон / WhatsApp *</label>
-                  <input type="tel" id="input-user-phone" placeholder="+7 (999) 000-00-00" inputmode="tel" maxlength="18" autocomplete="tel" required>
+                  <div class="input-with-icon">
+                    <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <input type="tel" id="input-user-phone" placeholder="+7 (999) 000-00-00" inputmode="tel" maxlength="18" autocomplete="tel" required>
+                  </div>
                 </div>
               </div>
 
               <div class="form-group">
                 <label for="input-user-tg">Ваш Telegram (@username)</label>
-                <input type="text" id="input-user-tg" placeholder="@username">
+                <div class="input-with-icon">
+                  <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+                  <input type="text" id="input-user-tg" placeholder="@username" autocomplete="off">
+                </div>
               </div>
 
-              <button type="submit" class="btn btn-telegram btn-large" id="btn-send-tg">
+              <button type="submit" class="btn btn-dark btn-large" id="btn-send-tg">
                 <span class="tg-btn-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></span>
-                <span>Отправить результат в Telegram</span>
+                <span>Отправить результат</span>
               </button>
+
+              <div class="form-privacy-note">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span>Конфиденциально · Результат видит только администратор</span>
+              </div>
             </form>
 
             <div class="tg-success-message hidden" id="tg-success-message">
@@ -139,26 +213,35 @@
               </div>
               <div class="stamp" aria-hidden="true">
                 <span class="stamp-main">Пройдено</span>
-                <span class="stamp-sub">LinguaAdaptive</span>
+                <span class="stamp-sub">Stanford</span>
               </div>
             </div>
           </div>
 
           <div class="restart-wrap">
-            <button class="btn btn-secondary" id="btn-restart-test"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg> Пройти тест заново</button>
+            <button class="btn btn-light" id="btn-restart-test"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg> Пройти тест заново</button>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="app-footer">
-      <p>© 2026 LinguaAdaptive • Computerized Adaptive Testing System</p>
+    <footer class="site-footer">
+      <img class="footer-logo" src="/logo.png" alt="Stanford Language Center" width="56" height="56">
+      <span>© 2026 Stanford Language Center</span>
+      <div class="footer-links">
+        <a href="#">Конфиденциальность</a>
+        <span class="footer-dot">·</span>
+        <a href="#">Связаться</a>
+        <span class="footer-dot">·</span>
+        <a href="https://t.me/" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+          Telegram
+        </a>
+      </div>
     </footer>
   </div>
 
   <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
-
   <script src="/js/app.js"></script>
 </body>
 </html>

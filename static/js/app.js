@@ -1,5 +1,5 @@
 /**
- * English Level CAT Platform — Client Application
+ * Stanford Language Center — English Test
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -20,6 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       tg.ready();
       tg.expand();
+      // Detect Telegram dark theme
+      if (tg.colorScheme === 'dark') document.body.classList.add('theme-dark');
+      tg.onEvent('themeChanged', () => {
+        document.body.classList.toggle('theme-dark', tg.colorScheme === 'dark');
+      });
       if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         tgUser = tg.initDataUnsafe.user;
         console.log('Telegram WebApp user detected:', tgUser);
@@ -27,6 +32,11 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       console.warn('Telegram WebApp initialization error:', e);
     }
+  }
+
+  // System dark mode for non-Telegram browsers
+  if (!tg && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+    document.body.classList.add('theme-dark');
   }
 
   // DOM Elements - Screens
@@ -60,8 +70,29 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedTestId = 'test_general_2026';
   let currentTestMode = 'fixed';
   let availableTests = [];
+  let isTestActive = false;
 
   const TG_BTN_DEFAULT_HTML = btnSendTg.innerHTML;
+
+  function triggerHaptic(type = 'light') {
+    try {
+      if (tg?.HapticFeedback) {
+        if (type === 'light' || type === 'medium' || type === 'heavy') {
+          tg.HapticFeedback.impactOccurred(type);
+        } else if (type === 'success' || type === 'error' || type === 'warning') {
+          tg.HapticFeedback.notificationOccurred(type);
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Prevent accidental back-swipe or tab close during an active test session
+  window.addEventListener('beforeunload', (e) => {
+    if (isTestActive) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
 
   const svgIcon = (inner, size = 18, fill = false) =>
     `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="${fill ? 'currentColor' : 'none'}" stroke="${fill ? 'none' : 'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
@@ -105,20 +136,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Phone mask: +7 (999) 000-00-00
+  // International Phone mask supporting Uzbekistan (+998), Russia/KZ (+7), and other international formats
   function maskPhone(raw) {
     let d = raw.replace(/\D/g, '');
-    if (d.startsWith('8')) d = '7' + d.slice(1);
-    else if (d.length > 0 && !d.startsWith('7')) d = '7' + d;
-    d = d.slice(0, 11);
     if (!d) return '';
-    let out = '+7';
-    if (d.length > 1) out += ' (' + d.slice(1, 4);
-    if (d.length >= 4) out += ')';
-    if (d.length > 4) out += ' ' + d.slice(4, 7);
-    if (d.length > 7) out += '-' + d.slice(7, 9);
-    if (d.length > 9) out += '-' + d.slice(9, 11);
-    return out;
+    // Uzbekistan prefix (998)
+    if (d.startsWith('998')) {
+      d = d.slice(0, 12);
+      let out = '+998';
+      if (d.length > 3) out += ' (' + d.slice(3, 5);
+      if (d.length >= 5) out += ')';
+      if (d.length > 5) out += ' ' + d.slice(5, 8);
+      if (d.length > 8) out += '-' + d.slice(8, 10);
+      if (d.length > 10) out += '-' + d.slice(10, 12);
+      return out;
+    }
+    // Russia / Kazakhstan prefix (7 or 8)
+    if (d.startsWith('7') || d.startsWith('8')) {
+      if (d.startsWith('8')) d = '7' + d.slice(1);
+      d = d.slice(0, 11);
+      let out = '+7';
+      if (d.length > 1) out += ' (' + d.slice(1, 4);
+      if (d.length >= 4) out += ')';
+      if (d.length > 4) out += ' ' + d.slice(4, 7);
+      if (d.length > 7) out += '-' + d.slice(7, 9);
+      if (d.length > 9) out += '-' + d.slice(9, 11);
+      return out;
+    }
+    // Other international numbers
+    d = d.slice(0, 15);
+    return '+' + d;
   }
 
   function countDigits(str, idx) {
@@ -314,6 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderTestCards(tests) {
     if (!testCardsGrid) return;
     testCardsGrid.innerHTML = '';
+    testCardsGrid.classList.toggle('is-single', Array.isArray(tests) && tests.length === 1);
 
     if (!tests || tests.length === 0) {
       testCardsGrid.innerHTML = '<div class="catalog-empty">Тесты временно недоступны. Попробуйте обновить страницу.</div>';
@@ -382,6 +430,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     screen.classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Move focus for keyboard / screen readers (one task per screen).
+    requestAnimationFrame(() => {
+      if (screen === screenQuestion && questionCard) {
+        questionCard.focus({ preventScroll: true });
+      } else if (screen === screenWelcome && btnStartTest) {
+        btnStartTest.focus({ preventScroll: true });
+      } else if (screen === screenResult && inputUserName) {
+        inputUserName.focus({ preventScroll: true });
+      }
+    });
   }
 
   // Timer helper
@@ -427,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
       sessionId = data.session_id;
       currentTestMode = data.test_mode || currentTestMode;
+      isTestActive = true;
 
       renderQuestion(data.first_question);
       showScreen(screenQuestion);
@@ -466,25 +526,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderProgressDots(q.question_number, q.total_estimated);
 
-    // Progress bar
+    // Progress bar (+ a11y aria-valuenow)
     const progressPct = Math.min(95, Math.round((q.question_number / q.total_estimated) * 100));
     progressFill.style.width = `${progressPct}%`;
+    const progressShell = progressFill.parentElement;
+    if (progressShell && progressShell.hasAttribute('role')) {
+      progressShell.setAttribute('aria-valuenow', String(progressPct));
+      progressShell.setAttribute('aria-label', `Прогресс: вопрос ${q.question_number} из ~${q.total_estimated}`);
+    }
 
-    // Format text with highlighted gap
+    // Format text with highlighted gap (supports 2 or more underscores)
     let text = q.text;
-    text = text.replace(/___/g, '<span style="color: var(--accent-cyan); font-weight: 700; border-bottom: 2px dashed var(--accent-cyan); padding: 0 4px;">_____</span>');
+    text = text.replace(/_{2,}/g, '<span class="gap-blank">_____</span>');
     qText.innerHTML = text;
 
     // Render Options
     optionsContainer.innerHTML = '';
+
+    if (questionCard) {
+      questionCard.classList.remove('question-enter');
+      void questionCard.offsetWidth; // trigger reflow for smooth animation
+      questionCard.classList.add('question-enter');
+    }
 
     if (q.question_type === 'text') {
       const wrap = document.createElement('div');
       wrap.className = 'text-answer-block';
       wrap.innerHTML = `
         <input type="text" class="text-answer-input" id="text-answer-input"
-               autocomplete="off" autocapitalize="off" spellcheck="false"
-               placeholder="Введите ответ..." aria-label="Введите ответ">
+               autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
+               enterkeyhint="done" placeholder="Введите ответ..." aria-label="Введите ответ">
         <button type="button" class="btn-primary text-answer-btn" id="text-answer-btn">Ответить</button>
       `;
       optionsContainer.appendChild(wrap);
@@ -505,11 +576,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.className = 'option-card';
         card.id = `option-${index}`;
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', `${keys[index]}. ${optText}`);
         card.innerHTML = `
           <div class="option-key">${keys[index]}</div>
           <div class="option-text">${optText}</div>
         `;
         card.addEventListener('click', () => selectOption(index));
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectOption(index);
+          }
+        });
         optionsContainer.appendChild(card);
       });
     }
@@ -530,6 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     isAnswering = true;
+    triggerHaptic('medium');
     stopQuestionTimer();
     const timeSpent = Math.max(1, (Date.now() - questionStartTime) / 1000);
 
@@ -563,6 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function selectOption(index) {
     if (isAnswering || !currentQuestion) return;
     isAnswering = true;
+    triggerHaptic('light');
     stopQuestionTimer();
 
     const timeSpent = Math.max(1, (Date.now() - questionStartTime) / 1000);
@@ -610,7 +692,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 4. RENDER RESULT
   function renderResult(res) {
+    isTestActive = false;
     progressFill.style.width = '100%';
+    const progressShell = progressFill.parentElement;
+    if (progressShell && progressShell.hasAttribute('role')) {
+      progressShell.setAttribute('aria-valuenow', '100');
+    }
 
     // Результат на сайте не показывается — данные уходят администратору в Telegram.
 
@@ -661,11 +748,12 @@ document.addEventListener('DOMContentLoaded', () => {
       firstInvalid = firstInvalid || inputUserName;
     }
     const phoneDigits = phone.replace(/\D/g, '');
-    if (phoneDigits.length !== 11 || !phoneDigits.startsWith('7')) {
-      setFieldError(inputUserPhone, 'Введите корректный телефон');
+    if (phoneDigits.length < 9 || phoneDigits.length > 15) {
+      setFieldError(inputUserPhone, 'Введите корректный номер телефона (от 9 цифр)');
       firstInvalid = firstInvalid || inputUserPhone;
     }
     if (firstInvalid) {
+      triggerHaptic('error');
       firstInvalid.focus();
       return;
     }
@@ -693,11 +781,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       tgSubmitForm.style.display = 'none';
       tgSuccessMessage.classList.remove('hidden');
-
-      // If in Telegram WebApp, notify user or haptic feedback
-      if (tg?.HapticFeedback) {
-        tg.HapticFeedback.notificationOccurred('success');
-      }
+      triggerHaptic('success');
     } catch (err) {
       console.error(err);
       showToast('Произошла ошибка при отправке в Telegram. Попробуйте еще раз.');
@@ -709,6 +793,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 6. RESET TO WELCOME
   function resetToWelcome() {
+    isTestActive = false;
     stopQuestionTimer();
     sessionId = null;
     currentQuestion = null;

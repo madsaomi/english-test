@@ -63,6 +63,23 @@ if dp:
         )
         await message.answer(help_text, parse_mode=ParseMode.HTML)
 
+def format_clean_level(cefr_level: str, level_title: str) -> str:
+    """Форматирует уровень без дублирования кода, например: 'B1 · Intermediate' или чистое 'Intermediate'."""
+    if not cefr_level:
+        return level_title or ""
+    if not level_title:
+        return cefr_level or ""
+    if cefr_level == level_title:
+        return level_title
+    if "(" in level_title and ")" in level_title:
+        title = level_title.replace(" (", " · ").rstrip(")")
+        if not title.startswith(cefr_level):
+            return f"{cefr_level} · {title}"
+        return title
+    if level_title.startswith(cefr_level):
+        return level_title
+    return f"{cefr_level} · {level_title}"
+
 def format_result_card(name: str, phone: Optional[str], username: Optional[str], result: TestResult) -> str:
     # Графический индикатор
     progress_blocks = "🟩" * (result.score // 10) + "⬜" * (10 - (result.score // 10))
@@ -71,27 +88,31 @@ def format_result_card(name: str, phone: Optional[str], username: Optional[str],
     seconds = result.total_time_seconds % 60
     time_str = f"{minutes} мин {seconds} сек" if minutes > 0 else f"{seconds} сек"
 
-    user_link = f"@{username}" if username else "Не указан"
+    user_link = f"@{username.lstrip('@')}" if username else "Не указан"
     phone_str = phone if phone else "Не указан"
+    level_str = format_clean_level(result.cefr_level, result.level_title)
 
     skills_lines = []
     for skill in result.skills:
         skills_lines.append(f"• <b>{skill.category}:</b> {skill.level} ({skill.score_percentage}%)")
     skills_text = "\n".join(skills_lines)
 
-    weak_text = "\n".join([f"• <i>{topic}</i>" for topic in result.weak_topics]) if result.weak_topics else "Ошибок почти нет!"
+    if result.weak_topics:
+        weak_text = "\n".join([f"• <i>{topic}</i>" for topic in result.weak_topics])
+    else:
+        weak_text = "✨ <i>Ошибок нет — безупречный результат!</i>"
 
     card = (
-        "🎓 <b>РЕЗУЛЬТАТ ТЕСТИРОВАНИЯ АНГЛИЙСКОГО (CAT)</b>\n"
+        "🏛 <b>STANFORD LANGUAGE CENTER • РЕЗУЛЬТАТ ТЕСТИРОВАНИЯ АНГЛИЙСКОГО</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 <b>Кандидат:</b> {name}\n"
         f"📱 <b>Телефон:</b> <code>{phone_str}</code>\n"
         f"💬 <b>Telegram:</b> {user_link}\n"
         "━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🏆 <b>Итоговый уровень:</b> <b>{result.cefr_level}</b> — {result.level_title}\n"
+        f"🏆 <b>Итоговый уровень:</b> <b>{level_str}</b>\n"
         f"📊 <b>Общий балл:</b> <b>{result.score}/100</b>\n"
         f"📈 <b>Шкала:</b> [{progress_blocks}]\n"
-        f"🎯 <b>Точность:</b> {result.correct_count} из {result.total_questions} вопросов ({result.accuracy_percentage}%)\n"
+        f"🎯 <b>Точность:</b> {result.correct_count} из {result.total_questions} ({result.accuracy_percentage}%)\n"
         f"⏱ <b>Время теста:</b> {time_str}\n\n"
         f"📚 <b>Детализация по навыкам:</b>\n{skills_text}\n\n"
         f"⚠️ <b>Темы для повторения:</b>\n{weak_text}\n"
@@ -101,7 +122,7 @@ def format_result_card(name: str, phone: Optional[str], username: Optional[str],
 
 def format_compact_lead_card(name: str, level_code: str, level_title: str,
                              phone: str, received_at: str) -> str:
-    """Компактная карточка заявки для сотрудника (Вариант A)."""
+    """Компактная карточка заявки для сотрудника (Вариант A / обратная совместимость)."""
     return (
         "🏷 <b>НОВАЯ ЗАЯВКА С ТЕСТА</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━\n"
@@ -112,10 +133,65 @@ def format_compact_lead_card(name: str, level_code: str, level_title: str,
         "━━━━━━━━━━━━━━━━━━━━━"
     )
 
+def format_unified_lead_card(name: str, phone: Optional[str], username: Optional[str],
+                             result: TestResult, received_at: str) -> str:
+    """Единая брендированная карточка заявки Stanford Language Center."""
+    progress_blocks = "🟩" * (result.score // 10) + "⬜" * (10 - (result.score // 10))
+    minutes = result.total_time_seconds // 60
+    seconds = result.total_time_seconds % 60
+    time_str = f"{minutes} мин {seconds} сек" if minutes > 0 else f"{seconds} сек"
+
+    user_link = f"@{username.lstrip('@')}" if username else "Не указан"
+    phone_str = phone if phone else "Не указан"
+    level_str = format_clean_level(result.cefr_level, result.level_title)
+
+    skills_lines = []
+    for skill in result.skills:
+        skills_lines.append(f"• <b>{skill.category}:</b> {skill.level} ({skill.score_percentage}%)")
+    skills_text = "\n".join(skills_lines)
+
+    if result.weak_topics:
+        weak_text = "\n".join([f"• <i>{topic}</i>" for topic in result.weak_topics])
+    else:
+        weak_text = "✨ <i>Ошибок нет — безупречный результат!</i>"
+
+    card = (
+        "🏛 <b>STANFORD LANGUAGE CENTER • РЕЗУЛЬТАТ ТЕСТИРОВАНИЯ АНГЛИЙСКОГО</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━\n"
+        f"👤 <b>Кандидат:</b> {name}\n"
+        f"📱 <b>Телефон:</b> <code>{phone_str}</code>\n"
+        f"💬 <b>Telegram:</b> {user_link}\n"
+        f"📅 <b>Принято:</b> {received_at}\n"
+        "━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🏆 <b>Итоговый уровень:</b> <b>{level_str}</b>\n"
+        f"📊 <b>Общий балл:</b> <b>{result.score}/100</b>\n"
+        f"📈 <b>Шкала:</b> [{progress_blocks}]\n"
+        f"🎯 <b>Точность:</b> {result.correct_count} из {result.total_questions} ({result.accuracy_percentage}%)\n"
+        f"⏱ <b>Время теста:</b> {time_str}\n\n"
+        f"📚 <b>Детализация по навыкам:</b>\n{skills_text}\n\n"
+        f"⚠️ <b>Темы для повторения:</b>\n{weak_text}\n"
+        "━━━━━━━━━━━━━━━━━━━━━"
+    )
+    return card
+
+def get_lead_action_keyboard(phone: Optional[str], username: Optional[str]) -> Optional[InlineKeyboardMarkup]:
+    """Генерирует инлайн-кнопки быстрого действия (написать в Telegram).
+    Примечание: Telegram Bot API допускает в url только HTTP/HTTPS-ссылки."""
+    buttons = []
+    action_row = []
+    if username:
+        clean_user = username.lstrip("@").strip()
+        if clean_user:
+            action_row.append(
+                InlineKeyboardButton(text="💬 Написать в Telegram", url=f"https://t.me/{clean_user}")
+            )
+    if action_row:
+        buttons.append(action_row)
+    return InlineKeyboardMarkup(inline_keyboard=buttons) if buttons else None
+
 
 async def send_admin_lead_notification(lead) -> bool:
-    """Отправляет сотруднику (ADMIN_CHAT_ID) ДВА сообщения подряд:
-    1) компактная карточка, 2) детальный результат кандидата."""
+    """Отправляет сотруднику (ADMIN_CHAT_ID) единое красивое сообщение с кнопками быстрого действия."""
     if not IS_BOT_ENABLED or not bot or not ADMIN_CHAT_ID:
         logger.info(
             f"[DEMO MODE] Уведомление сотруднику не отправлено (бот/ADMIN_CHAT_ID не настроены): "
@@ -124,40 +200,27 @@ async def send_admin_lead_notification(lead) -> bool:
         return False
 
     received_at = lead.received_at.strftime("%d.%m.%Y %H:%M")
-    compact = format_compact_lead_card(
-        name=lead.student_name,
-        level_code=lead.result.cefr_level,
-        level_title=lead.result.level_title,
-        phone=lead.phone,
-        received_at=received_at,
-    )
-    detailed = format_result_card(
+    text = format_unified_lead_card(
         name=lead.student_name,
         phone=lead.phone,
         username=lead.telegram_username,
         result=lead.result,
+        received_at=received_at,
     )
-
-    sent = True
-    try:
-        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=compact, parse_mode=ParseMode.HTML)
-    except Exception as e:
-        sent = False
-        logger.error(f"Ошибка отправки карточки сотруднику: {e}")
+    keyboard = get_lead_action_keyboard(lead.phone, lead.telegram_username)
 
     try:
         await bot.send_message(
             chat_id=ADMIN_CHAT_ID,
-            text=f"📊 <b>Детальный результат кандидата «{lead.student_name}»:</b>\n\n{detailed}",
-            parse_mode=ParseMode.HTML
+            text=text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=keyboard,
         )
-        sent = sent and True
-        logger.info(f"Карточка и детали отправлены сотруднику {ADMIN_CHAT_ID}")
+        logger.info(f"Единая карточка заявки отправлена сотруднику {ADMIN_CHAT_ID}")
+        return True
     except Exception as e:
-        sent = False
-        logger.error(f"Ошибка отправки детального результата сотруднику: {e}")
-
-    return sent
+        logger.error(f"Ошибка отправки единой карточки сотруднику: {e}")
+        return False
 
 
 async def send_student_full_result(name: str, tg_user_id: Optional[int], result: TestResult) -> bool:

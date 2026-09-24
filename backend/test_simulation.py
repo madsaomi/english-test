@@ -9,7 +9,10 @@ if hasattr(sys.stdout, "reconfigure"):
         pass
 from backend.cat_engine import cat_engine
 
-VALID_LEVELS = {"A1", "A2", "B1", "B2", "C1", "C2"}
+VALID_LEVELS = {
+    "Beginner", "Elementary", "Pre-Intermediate", "Intermediate", "Upper-Intermediate", "Advanced",
+    "A1", "A2", "B1", "B2", "C1", "C2"
+}
 
 
 def _answer_correctly(session, q):
@@ -55,20 +58,20 @@ def test_cat_simulation():
     print(f"[HIGH SCENARIO] Вопросов: {result_high.total_questions}, Уровень: {result_high.cefr_level}, Балл: {result_high.score}, Accuracy: {result_high.accuracy_percentage}%")
     assert result_high.total_questions == 50, f"Ожидалось 50 вопросов, получено {result_high.total_questions}"
     assert result_high.accuracy_percentage == 100
-    assert result_high.cefr_level in VALID_LEVELS
+    assert result_high.cefr_level == "Advanced", f"Ожидался Advanced, получено {result_high.cefr_level}"
     assert len(result_high.review) == 50
 
     result_low = _run_scenario("low")
     print(f"[LOW SCENARIO]  Вопросов: {result_low.total_questions}, Уровень: {result_low.cefr_level}, Балл: {result_low.score}, Accuracy: {result_low.accuracy_percentage}%")
     assert result_low.total_questions == 50
     assert result_low.accuracy_percentage == 0
-    assert result_low.cefr_level in VALID_LEVELS
+    assert result_low.cefr_level == "Beginner", f"Ожидался Beginner, получено {result_low.cefr_level}"
 
     result_mid = _run_scenario("mid")
     print(f"[MID SCENARIO]  Вопросов: {result_mid.total_questions}, Уровень: {result_mid.cefr_level}, Балл: {result_mid.score}, Accuracy: {result_mid.accuracy_percentage}%")
     assert result_mid.total_questions == 50
     assert result_mid.accuracy_percentage == 50
-    assert result_mid.cefr_level in VALID_LEVELS
+    assert result_mid.cefr_level == "Pre-Intermediate", f"Ожидался Pre-Intermediate, получено {result_mid.cefr_level}"
 
     # Монотонность балла: чем выше точность — тем выше score
     assert result_high.score > result_mid.score > result_low.score, (
@@ -86,5 +89,28 @@ def test_cat_simulation():
     print("✅ Все 3 симуляционных сценария теста test_general_2026 успешно пройдены!")
 
 
+def test_score_thresholds():
+    from backend.cat_engine import map_score_to_fixed_level
+    checks = [
+        (0, "Beginner"),
+        (15, "Beginner"),
+        (16, "Elementary"),
+        (24, "Elementary"),
+        (25, "Pre-Intermediate"),
+        (32, "Pre-Intermediate"),
+        (33, "Intermediate"),
+        (39, "Intermediate"),
+        (40, "Upper-Intermediate"),
+        (45, "Upper-Intermediate"),
+        (46, "Advanced"),
+        (50, "Advanced"),
+    ]
+    for score, expected in checks:
+        code, title, _ = map_score_to_fixed_level(score)
+        assert code == expected and title == expected, f"Score {score} expected {expected}, got {code}"
+    print("✅ Все 12 граничных значений шкалы оценивания успешно подтверждены!")
+
+
 if __name__ == "__main__":
+    test_score_thresholds()
     test_cat_simulation()

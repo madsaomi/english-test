@@ -18,6 +18,23 @@ CEFR_LEVELS = [
     (5.5, 6.01, "C2", "C2 (Mastery / Proficiency)", "Уровень носителя языка. Абсолютное понимание нюансов, тонких идиоматических выражений и сложной стилистики."),
 ]
 
+# Шкала оценки для фиксированного теста на 50 вопросов (General English Test 2026)
+FIXED_50_SCORING_TABLE = [
+    (0, 15, "Beginner", "Beginner", "Начальный уровень владения языком. Понимание базовых фраз, построение простых предложений."),
+    (16, 24, "Elementary", "Elementary", "Элементарный уровень. Общение на простые повседневные темы, знание базовых временных форм."),
+    (25, 32, "Pre-Intermediate", "Pre-Intermediate", "Уровень ниже среднего. Понимание несложных текстов, диалоги на знакомые темы, базовая грамматика."),
+    (33, 39, "Intermediate", "Intermediate", "Средний уровень. Понимание сути бесед на знакомые темы, уверенное выражение мыслей в путешествиях и на работе."),
+    (40, 45, "Upper-Intermediate", "Upper-Intermediate", "Продвинутый уровень. Свободное общение с носителями, понимание сложной грамматики и идиом."),
+    (46, 50, "Advanced", "Advanced", "Профессиональный уровень. Свободное беглое владение языком, богатый словарный запас и точные грамматические структуры."),
+]
+
+def map_score_to_fixed_level(correct_count: int):
+    correct_count = max(0, min(50, correct_count))
+    for low, high, code, title, desc in FIXED_50_SCORING_TABLE:
+        if low <= correct_count <= high:
+            return code, title, desc
+    return FIXED_50_SCORING_TABLE[-1][2], FIXED_50_SCORING_TABLE[-1][3], FIXED_50_SCORING_TABLE[-1][4]
+
 def map_ability_to_cefr(ability: float):
     ability = max(1.0, min(6.0, ability))
     for low, high, code, title, desc in CEFR_LEVELS:
@@ -231,19 +248,17 @@ class CATEngine:
         total_time = int(round(sum(h.get("time_spent", 0) for h in session.history)))
 
         if session.test_mode == "fixed" and total_questions > 0:
-            # Для фиксированного теста учитываем среднюю сложность вопросов и процент точности
-            avg_diff = sum(h["difficulty"] for h in session.history) / total_questions
-            # Корректируем уровень: при 100% точности даем верхнюю планку сложности набора
-            score_offset = (accuracy_pct - 50.0) / 100.0 * 1.2
-            final_ability = max(1.0, min(6.0, avg_diff + score_offset))
-            session.ability = final_ability
+            if total_questions == 50 or session.test_id == "test_general_2026":
+                cefr_code, cefr_title, cefr_desc = map_score_to_fixed_level(correct_count)
+            else:
+                pct = (correct_count / total_questions) * 50.0
+                cefr_code, cefr_title, cefr_desc = map_score_to_fixed_level(int(round(pct)))
             normalized_score = accuracy_pct
         else:
             # В адаптивном режиме нормализуем балл по ability
             normalized_score = int(round(((session.ability - 1.0) / 5.0) * 100))
             normalized_score = max(5, min(99, normalized_score))
-
-        cefr_code, cefr_title, cefr_desc = map_ability_to_cefr(session.ability)
+            cefr_code, cefr_title, cefr_desc = map_ability_to_cefr(session.ability)
 
         # Детализация по категориям
         categories = ["Grammar", "Vocabulary", "Usage"]
@@ -282,15 +297,15 @@ class CATEngine:
 
         # Рекомендации
         recommendations = []
-        if cefr_code in ["A1", "A2"]:
+        if cefr_code in ["A1", "A2", "Beginner", "Elementary"]:
             recommendations.append("Сосредоточьтесь на базовых временах (Present/Past Simple) и правилах построения предложений.")
             recommendations.append("Увеличьте словарный запас повседневной лексики (семья, еда, работа, путешествия).")
             recommendations.append("Слушайте адаптированные подкасты и песни с разбором текста.")
-        elif cefr_code in ["B1", "B2"]:
+        elif cefr_code in ["B1", "Pre-Intermediate", "Intermediate"]:
             recommendations.append("Повторите разницу времен Perfect и конструкции Conditionals (First, Second, Third).")
             recommendations.append("Отрабатывайте фразовые глаголы (phrasal verbs) и устойчивые словосочетания (collocations).")
             recommendations.append("Начните смотреть сериалы и видео на YouTube в оригинале с английскими субтитрами.")
-        else:  # C1, C2
+        else:  # B2, C1, C2, Upper-Intermediate, Advanced
             recommendations.append("Практикуйте инверсионные структуры, сослагательное наклонение (Subjunctive) и эмфатические предложения.")
             recommendations.append("Изучайте стилистические и идиоматические нюансы академического и бизнес-английского.")
             recommendations.append("Читайте сложную литературу, статьи The Economist / Nature и участвуйте в дебатах.")

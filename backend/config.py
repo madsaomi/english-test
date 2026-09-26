@@ -30,10 +30,19 @@ DATA_DIR: Path = Path(os.getenv("DATA_DIR", str(BASE_DIR / "data")))
 IS_BOT_ENABLED: bool = bool(BOT_TOKEN and BOT_TOKEN.lower() != "your_telegram_bot_token_here")
 
 # CORS: список разрешённых origin через запятую. Если не задан — разрешаем все
-# (удобно для локальной разработки), но без куки-креденшелов.
+# (удезно для локальной разработки), но без куки-креденшелов.
 _ALLOWED_ORIGINS_RAW: str = os.getenv("ALLOWED_ORIGINS", "").strip()
 ALLOWED_ORIGINS: List[str] = (
     [o.strip() for o in _ALLOWED_ORIGINS_RAW.split(",") if o.strip()]
     if _ALLOWED_ORIGINS_RAW
     else ["*"]
 )
+IS_CORS_WILDCARD: bool = ALLOWED_ORIGINS == ["*"]
+
+# --- Rate limiting (защита от спама и роста памяти) ---
+# Применяется только к мутациям (POST/PUT/PATCH/DELETE).
+# ВНИМАНИЕ: мобильные операторы используют CGNAT — несколько пользователей могут
+# иметь один IP. Лимит по умолчанию задан с запасом (нормальный темп теста ≈3.3 req/min).
+RATE_LIMIT_ENABLED: bool = os.getenv("RATE_LIMIT_ENABLED", "true").strip().lower() not in ("0", "false", "no", "off")
+RATE_LIMIT_REQUESTS: int = max(1, int(os.getenv("RATE_LIMIT_REQUESTS", "60")))
+RATE_LIMIT_WINDOW_SECONDS: int = max(1, int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60")))

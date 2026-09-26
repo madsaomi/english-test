@@ -4,13 +4,16 @@ import hmac
 import json
 import logging
 import re
+import time
+from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import parse_qsl
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from typing import List, Optional
@@ -23,6 +26,10 @@ from .config import (
     WEBAPP_URL,
     ALLOWED_ORIGINS,
     EXPORT_API_KEY,
+    IS_CORS_WILDCARD,
+    RATE_LIMIT_ENABLED,
+    RATE_LIMIT_REQUESTS,
+    RATE_LIMIT_WINDOW_SECONDS,
 )
 from .models import (
     StartTestRequest,
@@ -94,6 +101,31 @@ async def lifespan(app: FastAPI):
     # Фоновая очистка устаревших сессий (всегда активна)
     gc_task = asyncio.create_task(_garbage_collector())
 
+    # --- Предупреждения безопасности на старте ---
+    if IS_CORS_WILDCARD:
+        logger.warning(
+            "⚠️ CORS: ALLOWED_ORIGINS не задан → разрешён любой origin ('*'). "
+            "В проде обязательно укажите домен сайта, например "
+            "ALLOWED_ORIGINS=https://<service>.up.railway.app"
+        )
+    else:
+        logger.warning(
+            "⚠️ CORS: задан список origins и одновременно allow_credentials=True. "
+            "Если cookies не используются — это лишнее, лучше оставить '*' без credentials."
+        )
+
+    if RATE_LIMIT_ENABLED:
+        logger.info(
+            f"🛡️ Rate limit: {RATE_LIMIT_REQUESTS} мутационных запросов за "
+            f"{RATE_LIMIT_WINDOW_SECONDS}с на IP+User-Agent. "
+            "Учтите CGNAT: мобильные операторы делят IP между пользователями."
+        )
+    else:
+        logger.warning("⚠️ Rate limit ВЫКЛЮЧЁН (RATE_LIMIT_ENABLED=false) — эндпоинты не защищены от спама.")
+
+    if not EXPORT_API_KEY:
+        logger.warning("⚠️ EXPORT_API_KEY не задан → /api/export/leads отвечает 503 (отключён).")
+
     if IS_BOT_ENABLED and dp and bot:
         logger.info(f"🤖 Запуск Telegram-бота (aiogram polling). URL: {WEBAPP_URL}")
         # Удаляем старые вебхуки перед запуском polling
@@ -138,6 +170,53 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ----------------- Rate limiting (sliding window per client) -----------------
+
+MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+_rate_buckets: dict = defaultdict(deque)
+
+
+def _client_key(request: Request) -> str:
+    """Ключ бакета: IP (с X-Forwarded-For при наличии) + хеш User-Agent."""
+    forwarded = request.headers.get("x-forwarded-for", "")
+    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+    ua = request.headers.get("user-agent", "")
+    ua_hash = hashlib.sha256(ua.encode("utf-8")).hexdigest()[:8]
+    return f"{ip}|{ua_hash}"
+
+
+def _cleanup_rate_buckets(now: float) -> None:
+    """Периодическая чистка протухших бакетов, чтобы не течь по памяти."""
+    for key in [k for k, hits in _rate_buckets.items() if not hits or hits[-1] < now - RATE_LIMIT_WINDOW_SECONDS]:
+        _rate_buckets.pop(key, None)
+
+
+if RATE_LIMIT_ENABLED:
+    @app.middleware("http")
+    async def rate_limit_middleware(request: Request, call_next):
+        if request.method not in MUTATING_METHODS or not request.url.path.startswith("/api/"):
+            return await call_next(request)
+
+        now = time.monotonic()
+        _cleanup_rate_buckets(now)
+
+        key = _client_key(request)
+        hits = _rate_buckets[key]
+        if len(hits) >= RATE_LIMIT_REQUESTS:
+            retry_after = max(1, int(RATE_LIMIT_WINDOW_SECONDS - (now - hits[0])))
+            logger.warning(
+                f"Rate limit: {key} превысил {RATE_LIMIT_REQUESTS} запросов за "
+                f"{RATE_LIMIT_WINDOW_SECONDS}с на {request.url.path}"
+            )
+            return JSONResponse(
+                status_code=429,
+                content={"detail": f"Слишком много запросов. Повторите через {retry_after} сек."},
+                headers={"Retry-After": str(retry_after)},
+            )
+
+        hits.append(now)
+        return await call_next(request)
 
 # ----------------- REST API Endpoints -----------------
 
@@ -278,8 +357,30 @@ async def submit_user_contact(payload: UserContactSubmission):
         cat_engine.finalize_test(session)
 
     # Валидация Telegram WebApp initData (анти-спуфинг tg_user_id).
-    # В demo-режиме (без BOT_TOKEN) проверка пропускается.
-    if payload.tg_init_data and IS_BOT_ENABLED:
+    # Если клиент прислал tg_user_id, он обязан подтвердить его подписью initData.
+    # Иначе проверку можно обойти, просто не отправив поле (антипаттерн).
+    if payload.tg_user_id is not None:
+        if not IS_BOT_ENABLED:
+            raise HTTPException(
+                status_code=403,
+                detail="Проверка Telegram недоступна: сервер работает без BOT_TOKEN"
+            )
+        if not payload.tg_init_data:
+            raise HTTPException(
+                status_code=403,
+                detail="Невалидные данные Telegram WebApp: initData обязательна вместе с tg_user_id"
+            )
+        if not verify_telegram_init_data(payload.tg_init_data, BOT_TOKEN):
+            raise HTTPException(status_code=403, detail="Невалидные данные Telegram WebApp")
+        try:
+            query = dict(parse_qsl(payload.tg_init_data))
+            user_json = json.loads(query.get("user", "{}"))
+            if isinstance(user_json, dict) and user_json.get("id") is not None:
+                # id берём только из подписанных данных, поле клиента игнорируем
+                session.tg_user_id = user_json["id"]
+        except (ValueError, TypeError):
+            pass
+    elif payload.tg_init_data and IS_BOT_ENABLED:
         if not verify_telegram_init_data(payload.tg_init_data, BOT_TOKEN):
             raise HTTPException(status_code=403, detail="Невалидные данные Telegram WebApp")
         try:
@@ -293,7 +394,8 @@ async def submit_user_contact(payload: UserContactSubmission):
     session.user_name = payload.name.strip()
     session.user_phone = formatted_phone
     session.tg_username = payload.telegram_username
-    session.tg_user_id = payload.tg_user_id
+    if payload.tg_user_id is not None:
+        session.tg_user_id = payload.tg_user_id
     branch_val = (payload.branch or "Главный офис").strip()
     session.branch = branch_val
 

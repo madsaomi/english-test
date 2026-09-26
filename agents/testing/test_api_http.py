@@ -18,7 +18,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 # имеют приоритет над .env (load_dotenv не перезаписывает уже заданные значения).
 TEST_EXPORT_KEY = "test-export-key-do-not-use-in-prod"
 os.environ.setdefault("EXPORT_API_KEY", TEST_EXPORT_KEY)
+# Тесты гоняют полный 50-вопросный прогон за секунды, поэтому продовый лимит
+# (60/мин) в тестах отключается. Отдельный test_rate_limit_blocks_burst
+# временно понижает лимит и проверяет 429.
+os.environ.setdefault("RATE_LIMIT_REQUESTS", "100000")
 
+import backend.main as main_module
 from fastapi.testclient import TestClient
 
 from backend.main import app, verify_telegram_init_data
@@ -181,6 +186,76 @@ def test_leads_endpoint():
     assert res.status_code == 200
     assert isinstance(res.json(), list)
     print("[OK] HTTP test: /api/export/leads")
+
+
+def test_rate_limit_blocks_burst():
+    """Лимитер обязан отбивать всплеск мутационных запросов (429 + Retry-After)."""
+    client = TestClient(app)
+    original_limit = main_module.RATE_LIMIT_REQUESTS
+    main_module.RATE_LIMIT_REQUESTS = 10
+    main_module._rate_buckets.clear()
+    try:
+        statuses = []
+        for _ in range(25):
+            res = client.post(
+                "/api/test/start",
+                json={},
+                headers={"user-agent": "rate-limit-probe"},
+            )
+            statuses.append(res.status_code)
+            if res.status_code == 429:
+                assert "Retry-After" in res.headers
+                assert "Слишком много запросов" in res.json()["detail"]
+                break
+
+        assert statuses[0] == 200, "Первые запросы должны проходить"
+        assert 429 in statuses, f"Лимит не сработал: {set(statuses)}"
+        assert statuses.count(200) == 10, f"Ожидалось ровно 10 успешных, получено {statuses}"
+
+        # GET не лимитируется
+        for _ in range(5):
+            assert client.get("/api/health", headers={"user-agent": "rate-limit-probe"}).status_code == 200
+    finally:
+        main_module.RATE_LIMIT_REQUESTS = original_limit
+        main_module._rate_buckets.clear()
+
+    print("[OK] HTTP test: rate limit blocks burst (10 POST → 429), GET unaffected")
+
+
+def test_tg_user_id_requires_valid_init_data():
+    """Нельзя подделать tg_user_id без подписанной initData."""
+    client = TestClient(app)
+    sid = _complete_fixed(client)
+
+    # 1. tg_user_id без initData → 403
+    res = client.post("/api/test/submit-contact", json={
+        "session_id": sid,
+        "name": "Спуфер",
+        "phone": "+998 90 111-22-33",
+        "tg_user_id": 999999,
+    })
+    assert res.status_code == 403, res.status_code
+    assert "initData" in res.json()["detail"]
+
+    # 2. tg_user_id с мусорной initData → 403
+    res = client.post("/api/test/submit-contact", json={
+        "session_id": sid,
+        "name": "Спуфер",
+        "phone": "+998 90 111-22-33",
+        "tg_user_id": 999999,
+        "tg_init_data": "auth_date=1&hash=deadbeef",
+    })
+    assert res.status_code == 403, res.status_code
+
+    # 3. Без tg_user_id обычная отправка работает
+    res = client.post("/api/test/submit-contact", json={
+        "session_id": sid,
+        "name": "Обычный кандидат",
+        "phone": "+998 90 111-22-33",
+    })
+    assert res.status_code == 200, res.status_code
+
+    print("[OK] HTTP test: tg_user_id requires valid Telegram initData")
 
 
 def test_start_unknown_test_falls_back():
@@ -409,11 +484,13 @@ if __name__ == "__main__":
     test_text_answer_empty_rejected()
     test_choice_without_option_rejected()
     test_timeout_answers_allowed()
+    test_rate_limit_blocks_burst()
     test_leads_endpoint()
     test_start_unknown_test_falls_back()
     test_contact_requires_name_and_phone()
     test_contact_persist_and_export()
     test_lead_card_format()
     test_init_data_validation()
+    test_tg_user_id_requires_valid_init_data()
     test_export_leads_requires_api_key()
     print("[OK] ALL HTTP-LAYER TESTS PASSED!")

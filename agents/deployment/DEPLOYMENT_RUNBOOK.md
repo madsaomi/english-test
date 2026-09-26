@@ -128,11 +128,23 @@ Certbot автоматически сконфигурирует SSL и наст�
 | `BOT_TOKEN` | токен от @BotFather (пусто = демо-режим, сайт работает без бота) |
 | `ADMIN_CHAT_ID` | ID чата для карточек лидов |
 | `WEBAPP_URL` | `https://<service>.up.railway.app` (после Generate Domain) |
-| `ALLOWED_ORIGINS` | тот же URL через запятую, если нужен строгий CORS |
+| `ALLOWED_ORIGINS` | тот же URL через запятую. **Обязательно в проде** — иначе любой сайт сможет слать POST на API (в лог будет WARNING) |
+| `RATE_LIMIT_ENABLED` | `true` — защита от спама и роста памяти |
+| `RATE_LIMIT_REQUESTS` | `60` мутаций в минуту на IP (нормальный темп теста ≈3.3/мин) |
+| `RATE_LIMIT_WINDOW_SECONDS` | `60` |
 | **`EXPORT_API_KEY`** | **обязателен** — ключ для `GET /api/export/leads`. Без него эндпоинт отвечает **503**. Генерация: `python -c "import secrets; print(secrets.token_urlsafe(32))"` |
 | **`DATA_DIR`** | `/app/data` — путь хранения лидов (должен совпадать с mountPath тома) |
 
 `PORT` Railway задаёт сам — руками не указывать.
+
+### 2.0 Диагностика по логам при старте
+Сервер печатает в лог состояние безопасности — проверьте, что там нет `⚠️`:
+| Сообщение | Значение |
+|---|---|
+| `⚠️ CORS: ALLOWED_ORIGINS не задан` | в продеwildcard — задайте домен |
+| `⚠️ Rate limit ВЫКЛЮЧЁН` | защита отключена |
+| `⚠️ EXPORT_API_KEY не задан` | экспорт лидов отдаёт 503 |
+| `🛡️ Rate limit: 60 мутационных запросов за 60с` | норма, CGNAT-предупреждение в тексте |
 
 ### 2.1 Volume для лидов (обязательно, иначе данные теряются при каждом деплое)
 1. Railway → сервис → **Volumes** → **New Volume**
@@ -145,9 +157,10 @@ Certbot автоматически сконфигурирует SSL и наст�
 ### 4. Проверка
 - `GET /api/health` → `status: ok`, `total_questions_in_bank: 50`
 - `GET /api/tests` → один набор `test_general_2026`
-- `GET /api/export/leads` **без заголовка** → `401`
+- `GET /api/export/leads` **без заголовка** → `401` (или `503`, если ключ не задан)
 - `GET /api/export/leads` **с `-H "X-API-Key: <ключ>"`** → `200` со списком лидов
 - Локальный экспорт: `python agents/tools/export_results.py https://<domain>` (ключ берётся из `.env`)
+- Rate limit: 70 запросов подряд → последние получают `429` + `Retry-After` (проверить curl-циклом)
 
 ### ⚠️ Если аккаунт в restriction («ToS Violation»)
 Railway банит по risk-score аккаунта (регион/IP/платёжка), а не по коду этого репо. Конфиг это не обходит: напишите в support или используйте Способ 2 (VPS).

@@ -243,6 +243,38 @@ def run_integrity_check():
             errors_count += 1
         log_check("Токены и ID чата не зашиты в код", not secrets_in_code,
                   f"Найдено в: {secrets_in_code}")
+
+        # --- PLAN-017: rate limiting, CORS, анти-спуфинг tg_user_id ---
+        rate_limit_ok = all(token in main_py for token in (
+            "RATE_LIMIT_REQUESTS", "rate_limit_middleware", "status_code=429", "Retry-After"
+        )) and "RATE_LIMIT_REQUESTS" in config_py
+        if not rate_limit_ok:
+            errors_count += 1
+        log_check("Rate limiting мутационных запросов реализован (429 + Retry-After)", rate_limit_ok,
+                  "В backend/main.py нет rate_limit_middleware или RATE_LIMIT_* в config.py")
+
+        antispoof_ok = (
+            "payload.tg_user_id is not None" in main_py
+            and "initData обязательна вместе с tg_user_id" in main_py
+        )
+        if not antispoof_ok:
+            errors_count += 1
+        log_check("Анти-спуфинг: tg_user_id требует подписанной initData", antispoof_ok,
+                  "Проверка tg_user_id должна требовать tg_init_data (403 иначе)")
+
+        cors_warn_ok = "IS_CORS_WILDCARD" in config_py and "ALLOWED_ORIGINS не задан" in main_py
+        if not cors_warn_ok:
+            errors_count += 1
+        log_check("CORS: предупреждение о wildcard '*' при старте", cors_warn_ok,
+                  "Добавь IS_CORS_WILDCARD в config.py и WARNING в lifespan")
+
+        rl_documented = all(v in env_example for v in (
+            "RATE_LIMIT_ENABLED", "RATE_LIMIT_REQUESTS", "RATE_LIMIT_WINDOW_SECONDS"
+        ))
+        if not rl_documented:
+            errors_count += 1
+        log_check("Переменные rate limit документированы в .env.example", rl_documented,
+                  "Добавь RATE_LIMIT_* в .env.example")
     except Exception as e:
         errors_count += 1
         log_check("Проверка безопасности и персистентности", False, str(e))

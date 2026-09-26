@@ -820,8 +820,33 @@ body.theme-dark .hero-meta {
 .q-number {
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 1.08rem;
+  font-size: 1rem;
   letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 12px;
+  background: var(--cream-card);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 6px 16px -12px rgba(16, 16, 16, 0.4);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Жёлтая метка перед номером вопроса */
+.q-number::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(255, 186, 8, 0.28);
+  flex-shrink: 0;
+}
+
+body.theme-dark .q-number {
+  background: #1c1c1c;
+  border-color: rgba(255, 186, 8, 0.35);
 }
 
 /* Ring timer: seconds inside a shrinking SVG ring (30s / 35s limit) */
@@ -1086,6 +1111,23 @@ body.theme-dark .hero-meta {
   gap: 12px;
 }
 
+/* Каскад появления вариантов: карточки въезжают со ступенчатой задержкой.
+   Skeleton-карточки исключены, иначе загрузка дёргалась бы. */
+.options-grid > .option-card:not(.skeleton) {
+  animation: optionEnter 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.options-grid > .option-card:nth-child(1):not(.skeleton) { animation-delay: 0.02s; }
+.options-grid > .option-card:nth-child(2):not(.skeleton) { animation-delay: 0.07s; }
+.options-grid > .option-card:nth-child(3):not(.skeleton) { animation-delay: 0.12s; }
+.options-grid > .option-card:nth-child(4):not(.skeleton) { animation-delay: 0.17s; }
+.options-grid > .option-card:nth-child(5):not(.skeleton) { animation-delay: 0.22s; }
+
+@keyframes optionEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .option-card {
   display: flex;
   align-items: flex-start;
@@ -1243,8 +1285,12 @@ body.theme-dark .hero-meta {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
   margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(16, 16, 16, 0.04);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
   font-size: 0.82rem;
   color: var(--muted);
   font-weight: 500;
@@ -1254,6 +1300,11 @@ body.theme-dark .hero-meta {
 .form-privacy-note svg {
   flex-shrink: 0;
   color: var(--yellow-deep);
+}
+
+body.theme-dark .form-privacy-note {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 186, 8, 0.22);
 }
 
 /* --------------------------------------------------------------------------
@@ -1639,6 +1690,7 @@ body.theme-dark .hero-meta {
 
 .restart-wrap {
   text-align: center;
+  margin-top: 20px;
 }
 
 /* --------------------------------------------------------------------------
@@ -1791,6 +1843,33 @@ body.theme-dark .hero-meta {
 
   .site-footer {
     padding: 24px 16px;
+  }
+}
+
+/* Узкие телефоны: топбар не должен тесниться */
+@media (max-width: 400px) {
+  .timer-ring {
+    width: 42px;
+    height: 42px;
+  }
+
+  .timer-ring-value {
+    font-size: 0.95rem;
+  }
+
+  .q-number {
+    font-size: 0.92rem;
+    padding: 6px 11px 6px 10px;
+  }
+
+  .hero-meta {
+    font-size: 0.8rem;
+    padding: 6px 14px;
+    gap: 8px;
+  }
+
+  .option-text {
+    font-size: 1rem;
   }
 }
 

@@ -2,8 +2,8 @@
 
 **Последнее обновление:** 2026-09-26 (UTC+5)  
 **Ответственный агент:** opencode (space-bunny-free)  
-**Текущая фаза:** PLAN-017 (Rate limiting + CORS + анти-спуфинг) — COMPLETED, ждёт коммита.  
-Закрыто ранее: PLAN-016 (UI-полировка), PLAN-015 (PII + персистентность).
+**Текущая фаза:** PLAN-018 (Закрытие техдолга: OG-превью, метрики, time_spent, мёртвый CSS) — COMPLETED, ждёт коммита.  
+Закрыто ранее: PLAN-017 (rate limit + CORS + анти-спуфинг), PLAN-016 (UI), PLAN-015 (PII + персистентность).
 
 ---
 
@@ -21,7 +21,7 @@
 | **Защита PII (PLAN-015)** | 🟢 Готово | `/api/export/leads` закрыт `X-API-Key` (503 без ключа, 401 с неверным) |
 | **Персистентность лидов (PLAN-015)** | 🟢 Готово | `DATA_DIR` через env; Railway volume `lead-data` → `/app/data` (создать том в UI) |
 | **Веб-интерфейс (`static/`)** | 🟢 Готово | PLAN-016: прогресс-бар, кольцо-таймер, ответы без букв, переключатель темы ☀️/🌙 |
-| **Тесты & CI** | 🟢 Готово | `check_integrity` (100%, 11 security-чеков), `test_api_http` (**17/17**), `test_multi_suites` (4/4), `test_review_feature` — PASSED |
+| **Тесты & CI** | 🟢 Готово | `check_integrity` (100%, **15** security-чеков), `test_api_http` (**19/19**), `test_multi_suites` (4/4), `test_review_feature` — PASSED |
 
 ---
 
@@ -39,11 +39,10 @@
 | # | Дыра | Риск |
 |---|---|---|
 | 1 | CGNAT: мобильные операторы делят IP — теоретически возможен ложный 429 | 🟡 mitigated (60/мин, UA в ключе, настраивается) |
-| 2 | `/api/health` отдаёт `active_sessions` в прод | 🟡 утечка метрик |
-| 3 | Нет лимита на `time_spent_seconds` (мусорные значения в статистике) | 🟡 |
-| 4 | Нет `og:url`, `twitter:card=summary` вместо `large_image` | 🟡 превью в соцсетях |
-| 5 | Мёртвый CSS `.option-key` в `style.css` (разметка не создаётся) | ⚪ косметика |
-| 6 | Сессии in-memory → рестарт Railway = потеря прогресса | ℹ️ решение принято (не персистим) |
+| 2 | Сессии in-memory → рестарт Railway = потеря прогресса | ℹ️ решение принято (не персистим) |
+| 3 | Лимит по IP, а не по сессии — при росте нагрузки может понадобиться per-session лимитинг | ⚪ только при масштабировании |
+
+**Закрыто в PLAN-018:** `active_sessions` в health (флаг `SHOW_INTERNAL_METRICS`), лимит `time_spent_seconds` (`Field(ge=0, le=3600)`), `og:url` + `twitter:card=summary_large_image` + абсолютизация OG-мет через `location.origin`, мёртвый CSS `.option-key`. Технический долг из аудита **закрыт полностью**.
 
 ## 📌 Требуется вручную в Railway
 ```ini
@@ -51,5 +50,15 @@ ALLOWED_ORIGINS=https://<service>.up.railway.app
 EXPORT_API_KEY=<python -c "import secrets; print(secrets.token_urlsafe(32))">
 DATA_DIR=/app/data
 RATE_LIMIT_ENABLED=true
+SHOW_INTERNAL_METRICS=false
 ```
 Volume: `lead-data` → `/app/data`. Старую копию лидов (если была) перенести в том вручную.
+
+## 🎯 Что сделано в PLAN-018:
+- [x] **OG-превью:** `og:url`, `og:site_name`, `og:image:width/height`, `twitter:card=summary_large_image` + JS абсолютизирует `og:url`/`og:image`/`twitter:image` через `location.origin` (работает на любом домене без пересборки; статический тег оставлен для краулеров без JS).
+- [x] **Техметрики:** `active_sessions` в `/api/health` скрыт по умолчанию, флаг `SHOW_INTERNAL_METRICS` (в `.env.example`).
+- [x] **`time_spent_seconds`:** `Field(ge=0.0, le=3600.0)` → 422 на мусор (было: любое значение попадало в статистику).
+- [x] **Мёртвый CSS:** `.option-key` удалён из `style.css` (0 вхождений).
+- [x] **Поймана и исправлена регрессия:** массовая регулярка повредила 2 селектора и порядок перекрывающихся правил — восстановлено, `.option-card.selected .option-text` перенесён после базового.
+- [x] **Тесты 19/19:** `test_health_hides_internal_metrics_by_default`, `test_time_spent_out_of_range_rejected` (422/422/200).
+- [x] `check_integrity.py`: +4 чека (метрики, time_spent, OG-превью, мёртвый CSS) → **15 security-чеков**.

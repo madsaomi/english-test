@@ -275,6 +275,44 @@ def run_integrity_check():
             errors_count += 1
         log_check("Переменные rate limit документированы в .env.example", rl_documented,
                   "Добавь RATE_LIMIT_* в .env.example")
+
+        # --- PLAN-018: техметрики, time_spent, OG-превью, мёртвый CSS ---
+        models_py = (BASE_DIR / "backend" / "models.py").read_text(encoding="utf-8")
+        metrics_hidden = (
+            "SHOW_INTERNAL_METRICS" in config_py
+            and "if SHOW_INTERNAL_METRICS:" in main_py
+            and "SHOW_INTERNAL_METRICS" in env_example
+        )
+        if not metrics_hidden:
+            errors_count += 1
+        log_check("Техметрики /api/health скрыты по умолчанию (SHOW_INTERNAL_METRICS)", metrics_hidden,
+                  "Добавь SHOW_INTERNAL_METRICS в config.py, проверку в health и .env.example")
+
+        time_bounded = "time_spent_seconds: float = Field(default=0.0, ge=0.0, le=3600.0)" in models_py
+        if not time_bounded:
+            errors_count += 1
+        log_check("time_spent_seconds ограничен диапазоном 0..3600", time_bounded,
+                  "Добавь Field(ge=0.0, le=3600.0) в AnswerSubmission")
+
+        index_html = (BASE_DIR / "static" / "index.html").read_text(encoding="utf-8")
+        app_js = (BASE_DIR / "static" / "js" / "app.js").read_text(encoding="utf-8")
+        og_ok = (
+            "summary_large_image" in index_html
+            and 'property="og:image"' in index_html
+            and "og:url" in index_html
+            and "og:url" in app_js
+        )
+        if not og_ok:
+            errors_count += 1
+        log_check("OG-превью: summary_large_image + абсолютные og:url/og:image", og_ok,
+                  "Добавь og:url/summary_large_image в index.html и absolutization в app.js")
+
+        style_css = (BASE_DIR / "static" / "css" / "style.css").read_text(encoding="utf-8")
+        no_dead_css = "option-key" not in style_css and "option-key" not in app_js
+        if not no_dead_css:
+            errors_count += 1
+        log_check("Мёртвый CSS .option-key удалён (разметка не создаётся)", no_dead_css,
+                  "Удали правила .option-key из style.css")
     except Exception as e:
         errors_count += 1
         log_check("Проверка безопасности и персистентности", False, str(e))

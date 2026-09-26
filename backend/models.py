@@ -30,7 +30,9 @@ class AnswerSubmission(BaseModel):
     question_id: str
     selected_option: Optional[int] = None
     selected_text: Optional[str] = None
-    time_spent_seconds: float = 0.0
+    # Античит-таймер на клиенте ограничен 30/35 секундами. Верхняя граница 3600
+    # отсекает мусорные значения (например, 10**9) и не даёт испортить статистику.
+    time_spent_seconds: float = Field(default=0.0, ge=0.0, le=3600.0)
     is_timeout: bool = False
 
 class UserContactSubmission(BaseModel):

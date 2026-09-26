@@ -22,6 +22,9 @@ os.environ.setdefault("EXPORT_API_KEY", TEST_EXPORT_KEY)
 # (60/мин) в тестах отключается. Отдельный test_rate_limit_blocks_burst
 # временно понижает лимит и проверяет 429.
 os.environ.setdefault("RATE_LIMIT_REQUESTS", "100000")
+# В тестах внутренние метрики включаем, чтобы проверять их наличие;
+# отдельный test_health_hides_internal_metrics_by_default проверяет скрытие.
+os.environ.setdefault("SHOW_INTERNAL_METRICS", "true")
 
 import backend.main as main_module
 from fastapi.testclient import TestClient
@@ -43,6 +46,64 @@ def test_health_endpoint():
     assert data["total_questions_in_bank"] == 50
     assert "active_sessions" in data
     print("[OK] HTTP test: /api/health")
+
+
+def test_health_hides_internal_metrics_by_default():
+    """Техметрики (active_sessions) не должны утекать в публичный health."""
+    client = TestClient(app)
+    original = main_module.SHOW_INTERNAL_METRICS
+    main_module.SHOW_INTERNAL_METRICS = False
+    try:
+        res = client.get("/api/health")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["status"] == "ok"
+        assert data["total_questions_in_bank"] == 50
+        assert "active_sessions" not in data, "Техметрики не должны отдаваться по умолчанию"
+    finally:
+        main_module.SHOW_INTERNAL_METRICS = original
+
+    # С флагом метрика возвращается
+    assert "active_sessions" in client.get("/api/health").json()
+    print("[OK] HTTP test: /api/health hides internal metrics by default")
+
+
+def test_time_spent_out_of_range_rejected():
+    """Мусорные time_spent_seconds не должны попадать в статистику."""
+    client = TestClient(app)
+    start = client.post("/api/test/start", json={}).json()
+    sid = start["session_id"]
+    qid = start["first_question"]["id"]
+
+    # 1. Огромное значение → 422
+    res = client.post("/api/test/answer", json={
+        "session_id": sid,
+        "question_id": qid,
+        "selected_option": 0,
+        "time_spent_seconds": 10 ** 9,
+    })
+    assert res.status_code == 422, res.status_code
+
+    # 2. Отрицательное → 422
+    res = client.post("/api/test/answer", json={
+        "session_id": sid,
+        "question_id": qid,
+        "selected_option": 0,
+        "time_spent_seconds": -5,
+    })
+    assert res.status_code == 422, res.status_code
+
+    # 3. Реалистичное значение принимается
+    res = client.post("/api/test/answer", json={
+        "session_id": sid,
+        "question_id": qid,
+        "selected_option": 0,
+        "time_spent_seconds": 7.5,
+    })
+    assert res.status_code == 200, res.status_code
+    assert res.json()["is_correct"] in (True, False)
+
+    print("[OK] HTTP test: time_spent_seconds validated (0..3600)")
 
 
 def test_catalog_endpoint():
@@ -477,6 +538,7 @@ def test_export_leads_requires_api_key():
 
 if __name__ == "__main__":
     test_health_endpoint()
+    test_health_hides_internal_metrics_by_default()
     test_catalog_endpoint()
     test_cors_wildcard_default()
     test_fixed_general_run_over_http()
@@ -484,6 +546,7 @@ if __name__ == "__main__":
     test_text_answer_empty_rejected()
     test_choice_without_option_rejected()
     test_timeout_answers_allowed()
+    test_time_spent_out_of_range_rejected()
     test_rate_limit_blocks_burst()
     test_leads_endpoint()
     test_start_unknown_test_falls_back()

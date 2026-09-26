@@ -46,3 +46,8 @@ IS_CORS_WILDCARD: bool = ALLOWED_ORIGINS == ["*"]
 RATE_LIMIT_ENABLED: bool = os.getenv("RATE_LIMIT_ENABLED", "true").strip().lower() not in ("0", "false", "no", "off")
 RATE_LIMIT_REQUESTS: int = max(1, int(os.getenv("RATE_LIMIT_REQUESTS", "60")))
 RATE_LIMIT_WINDOW_SECONDS: int = max(1, int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60")))
+
+# --- Внутренние метрики в /api/health ---
+# По умолчанию скрыты: количество активных сессий — техническая метрика,
+# которая не должна утекать в публичный health-эндпоинт.
+SHOW_INTERNAL_METRICS: bool = os.getenv("SHOW_INTERNAL_METRICS", "false").strip().lower() in ("1", "true", "yes", "on")

@@ -16,6 +16,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const tg = window.Telegram?.WebApp;
   let tgUser = null;
 
+  // --- Абсолютные OG-меты для превью в Telegram/VK/WhatsApp ---
+  // Telegram и соцсети не принимают относительные /logo.png, поэтому подставляем
+  // текущий origin. Работает на любом домене без правки сборки.
+  (function applyAbsoluteSocialMeta() {
+    const origin = window.location.origin;
+    if (!origin || origin === 'null') return;
+
+    const setContent = (selector, value) => {
+      const el = document.querySelector(selector);
+      if (el) el.setAttribute('content', value);
+    };
+
+    setContent('meta[property="og:url"]', origin + '/');
+    setContent('meta[property="og:image"]', origin + '/logo.png');
+    setContent('meta[name="twitter:image"]', origin + '/logo.png');
+
+    if (!document.querySelector('meta[property="og:url"]')) {
+      const meta = document.createElement('meta');
+      meta.setAttribute('property', 'og:url');
+      meta.setAttribute('content', origin + '/');
+      document.head.appendChild(meta);
+    }
+  })();
+
   // Theme: manual choice (localStorage) wins over Telegram / system preference.
   const THEME_KEY = 'slc_theme';
   const themeToggle = document.getElementById('theme-toggle');

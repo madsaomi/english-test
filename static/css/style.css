@@ -1079,42 +1079,6 @@ body.theme-dark .hero-meta {
   box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.4);
 }
 
-.option-card.selected .option-text {
-  padding-right: 34px;
-}
-
-@keyframes optionConfirm {
-  0% { transform: scale(1.015); }
-  100% { transform: scale(1); }
-}
-
-.option-key {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  border: 1.5px solid var(--line-strong);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 1rem;
-  color: var(--muted);
-  background: #fff;
-  flex-shrink: 0;
-  margin-top: 1px;
-  transition: all var(--transition-fast);
-  box-shadow: 0 2px 0 rgba(16, 16, 16, 0.06);
-}
-
-.option-card:hover .option-key,
-.option-card.selected .option-key {
-  background: var(--black);
-  border-color: var(--black);
-  color: var(--yellow);
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
-}
-
 .option-text {
   font-size: 1.05rem;
   font-weight: 500;
@@ -1122,6 +1086,16 @@ body.theme-dark .hero-meta {
   line-height: 1.45;
   padding-right: 4px;
   padding-top: 5px;
+}
+
+/* Галочка выбора не должна наезжать на текст */
+.option-card.selected .option-text {
+  padding-right: 34px;
+}
+
+@keyframes optionConfirm {
+  0% { transform: scale(1.015); }
+  100% { transform: scale(1); }
 }
 
 .text-answer-block {
@@ -1920,22 +1894,6 @@ body.theme-dark .option-card:hover {
 
 body.theme-dark .option-card.selected {
   background: linear-gradient(180deg, #4a3800 0%, #3a2c00 100%);
-}
-
-body.theme-dark .option-key {
-  background: #242424;
-}
-
-body.theme-dark .option-card:hover .option-key,
-body.theme-dark .option-card.selected .option-key {
-  background: #eae6dc;
-  border-color: #eae6dc;
-  color: #121212;
-}
-
-body.theme-dark .option-card.selected::after {
-  background: #eae6dc;
-  color: #121212;
 }
 
 body.theme-dark .text-answer-input {

@@ -30,6 +30,7 @@ from .config import (
     RATE_LIMIT_ENABLED,
     RATE_LIMIT_REQUESTS,
     RATE_LIMIT_WINDOW_SECONDS,
+    SHOW_INTERNAL_METRICS,
 )
 from .models import (
     StartTestRequest,
@@ -222,13 +223,17 @@ if RATE_LIMIT_ENABLED:
 
 @app.get("/api/health")
 async def health_check():
-    return {
+    payload = {
         "status": "ok",
         "bot_enabled": IS_BOT_ENABLED,
         "admin_chat_configured": bool(ADMIN_CHAT_ID),
         "total_questions_in_bank": len(test_repository.get_all_questions_pool()),
-        "active_sessions": len(cat_engine.sessions)
     }
+    # Технические метрики (например, число активных сессий) не отдаются наружу
+    # по умолчанию — включаются флагом SHOW_INTERNAL_METRICS.
+    if SHOW_INTERNAL_METRICS:
+        payload["active_sessions"] = len(cat_engine.sessions)
+    return payload
 
 @app.get("/api/tests", response_model=List[TestSuiteMeta])
 async def list_available_tests():

@@ -16,14 +16,56 @@ document.addEventListener('DOMContentLoaded', () => {
   const tg = window.Telegram?.WebApp;
   let tgUser = null;
 
+  // Theme: manual choice (localStorage) wins over Telegram / system preference.
+  const THEME_KEY = 'slc_theme';
+  const themeToggle = document.getElementById('theme-toggle');
+  let themeLocked = false;
+
+  function applyTheme(isDark) {
+    document.body.classList.toggle('theme-dark', isDark);
+  }
+
+  function detectSystemDark() {
+    return !!window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+  }
+
+  (function initTheme() {
+    let saved = null;
+    try {
+      saved = localStorage.getItem(THEME_KEY);
+    } catch (e) { /* private mode / disabled storage */ }
+
+    if (saved === 'dark' || saved === 'light') {
+      themeLocked = true;
+      applyTheme(saved === 'dark');
+      return;
+    }
+
+    if (tg) {
+      applyTheme(tg.colorScheme === 'dark');
+    } else {
+      applyTheme(detectSystemDark());
+    }
+  })();
+
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const nextDark = !document.body.classList.contains('theme-dark');
+      themeLocked = true;
+      applyTheme(nextDark);
+      try {
+        localStorage.setItem(THEME_KEY, nextDark ? 'dark' : 'light');
+      } catch (e) { /* ignore */ }
+    });
+  }
+
   if (tg) {
     try {
       tg.ready();
       tg.expand();
-      // Detect Telegram dark theme
-      if (tg.colorScheme === 'dark') document.body.classList.add('theme-dark');
+      // Telegram theme changes only apply while the user has no manual choice.
       tg.onEvent('themeChanged', () => {
-        document.body.classList.toggle('theme-dark', tg.colorScheme === 'dark');
+        if (!themeLocked) applyTheme(tg.colorScheme === 'dark');
       });
       if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         tgUser = tg.initDataUnsafe.user;
@@ -32,11 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       console.warn('Telegram WebApp initialization error:', e);
     }
-  }
-
-  // System dark mode for non-Telegram browsers
-  if (!tg && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
-    document.body.classList.add('theme-dark');
   }
 
   // DOM Elements - Screens
@@ -49,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const progressFill = document.getElementById('progress-fill');
   const timerBadge = document.getElementById('timer-badge');
   const timerText = document.getElementById('timer-text');
+  const timerRingFill = document.getElementById('timer-ring-fill');
   const qText = document.getElementById('q-text');
   const optionsContainer = document.getElementById('options-container');
   const questionCard = document.getElementById('question-card');
@@ -516,9 +554,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateTimerDisplay(remaining) {
-    const mins = Math.floor(remaining / 60);
-    const secs = remaining % 60;
-    timerText.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    const secs = Math.max(0, Math.ceil(remaining));
+    timerText.textContent = String(secs);
+
+    if (timerRingFill && questionTimeLimit > 0) {
+      const circumference = 119.38; // 2 * PI * r(19)
+      const ratio = Math.max(0, Math.min(1, remaining / questionTimeLimit));
+      timerRingFill.style.strokeDasharray = String(circumference);
+      timerRingFill.style.strokeDashoffset = String(circumference * (1 - ratio));
+    }
   }
 
   async function handleQuestionTimeout() {
@@ -675,17 +719,14 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       setTimeout(() => textInput.focus(), 50);
     } else {
-      const keys = ['A', 'B', 'C', 'D'];
-
       q.options.forEach((optText, index) => {
         const card = document.createElement('div');
         card.className = 'option-card';
         card.id = `option-${index}`;
         card.setAttribute('role', 'button');
         card.setAttribute('tabindex', '0');
-        card.setAttribute('aria-label', `${keys[index]}. ${optText}`);
+        card.setAttribute('aria-label', optText);
         card.innerHTML = `
-          <div class="option-key">${keys[index]}</div>
           <div class="option-text">${optText}</div>
         `;
         card.addEventListener('click', () => selectOption(index));

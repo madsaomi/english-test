@@ -129,8 +129,15 @@ Certbot автоматически сконфигурирует SSL и наст�
 | `ADMIN_CHAT_ID` | ID чата для карточек лидов |
 | `WEBAPP_URL` | `https://<service>.up.railway.app` (после Generate Domain) |
 | `ALLOWED_ORIGINS` | тот же URL через запятую, если нужен строгий CORS |
+| **`EXPORT_API_KEY`** | **обязателен** — ключ для `GET /api/export/leads`. Без него эндпоинт отвечает **503**. Генерация: `python -c "import secrets; print(secrets.token_urlsafe(32))"` |
+| **`DATA_DIR`** | `/app/data` — путь хранения лидов (должен совпадать с mountPath тома) |
 
 `PORT` Railway задаёт сам — руками не указывать.
+
+### 2.1 Volume для лидов (обязательно, иначе данные теряются при каждом деплое)
+1. Railway → сервис → **Volumes** → **New Volume**
+2. Name: `lead-data`, Mount path: `/app/data`
+3. Без тома файловая система контейнера пересоздаётся при каждом деплое/рестарте, и `data/leads.json` **исчезает** (см. `BUG_004_leads_pii_leak_and_data_loss.md`)
 
 ### 3. Публичный домен
 **Settings → Networking → Generate Domain** → получите `https://....up.railway.app` → впишите в `WEBAPP_URL` (и при необходимости `ALLOWED_ORIGINS`) → redeploy.
@@ -138,6 +145,9 @@ Certbot автоматически сконфигурирует SSL и наст�
 ### 4. Проверка
 - `GET /api/health` → `status: ok`, `total_questions_in_bank: 50`
 - `GET /api/tests` → один набор `test_general_2026`
+- `GET /api/export/leads` **без заголовка** → `401`
+- `GET /api/export/leads` **с `-H "X-API-Key: <ключ>"`** → `200` со списком лидов
+- Локальный экспорт: `python agents/tools/export_results.py https://<domain>` (ключ берётся из `.env`)
 
 ### ⚠️ Если аккаунт в restriction («ToS Violation»)
 Railway банит по risk-score аккаунта (регион/IP/платёжка), а не по коду этого репо. Конфиг это не обходит: напишите в support или используйте Способ 2 (VPS).

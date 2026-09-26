@@ -82,9 +82,6 @@ def format_clean_level(cefr_level: str, level_title: str) -> str:
 
 def format_result_card(name: str, phone: Optional[str], username: Optional[str], result: TestResult,
                        branch: Optional[str] = "Главный офис") -> str:
-    # Графический индикатор
-    progress_blocks = "🟩" * (result.score // 10) + "⬜" * (10 - (result.score // 10))
-    
     minutes = result.total_time_seconds // 60
     seconds = result.total_time_seconds % 60
     time_str = f"{minutes} мин {seconds} сек" if minutes > 0 else f"{seconds} сек"
@@ -120,7 +117,6 @@ def format_result_card(name: str, phone: Optional[str], username: Optional[str],
         "━━━━━━━━━━━━━━━━━━━━━\n"
         f"🏆 <b>Итоговый уровень:</b> <b>{level_str}</b>\n"
         f"📊 <b>Общий балл:</b> <b>{result.score}/100</b>\n"
-        f"📈 <b>Шкала:</b> [{progress_blocks}]\n"
         f"{accuracy_line}\n"
         f"⏱ <b>Время теста:</b> {time_str}\n\n"
         f"📚 <b>Детализация по навыкам:</b>\n{skills_text}\n\n"
@@ -149,7 +145,6 @@ def format_unified_lead_card(name: str, phone: Optional[str], username: Optional
                              result: TestResult, received_at: str,
                              branch: Optional[str] = "Главный офис") -> str:
     """Единая брендированная карточка заявки Stanford Language Center."""
-    progress_blocks = "🟩" * (result.score // 10) + "⬜" * (10 - (result.score // 10))
     minutes = result.total_time_seconds // 60
     seconds = result.total_time_seconds % 60
     time_str = f"{minutes} мин {seconds} сек" if minutes > 0 else f"{seconds} сек"
@@ -186,7 +181,6 @@ def format_unified_lead_card(name: str, phone: Optional[str], username: Optional
         "━━━━━━━━━━━━━━━━━━━━━\n"
         f"🏆 <b>Итоговый уровень:</b> <b>{level_str}</b>\n"
         f"📊 <b>Общий балл:</b> <b>{result.score}/100</b>\n"
-        f"📈 <b>Шкала:</b> [{progress_blocks}]\n"
         f"{accuracy_line}\n"
         f"⏱ <b>Время теста:</b> {time_str}\n\n"
         f"📚 <b>Детализация по навыкам:</b>\n{skills_text}\n\n"

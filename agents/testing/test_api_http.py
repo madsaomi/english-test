@@ -5,6 +5,7 @@
 а также криптографию initData (Telegram WebApp).
 """
 
+import os
 import sys
 import hashlib
 import hmac
@@ -13,12 +14,17 @@ from urllib.parse import urlencode
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
+# Тестовый ключ экспорта лидов ДО импорта backend.config: переменные окружения
+# имеют приоритет над .env (load_dotenv не перезаписывает уже заданные значения).
+TEST_EXPORT_KEY = "test-export-key-do-not-use-in-prod"
+os.environ.setdefault("EXPORT_API_KEY", TEST_EXPORT_KEY)
+
 from fastapi.testclient import TestClient
 
 from backend.main import app, verify_telegram_init_data
 from backend.test_loader import test_repository
 from backend.lead_store import lead_store
-from backend.telegram_bot import format_compact_lead_card, format_unified_lead_card
+from backend.telegram_bot import format_compact_lead_card, format_unified_lead_card, format_result_card
 from backend.models import TestResult
 
 
@@ -171,7 +177,7 @@ def test_choice_without_option_rejected():
 
 def test_leads_endpoint():
     client = TestClient(app)
-    res = client.get("/api/export/leads")
+    res = client.get("/api/export/leads", headers={"X-API-Key": TEST_EXPORT_KEY})
     assert res.status_code == 200
     assert isinstance(res.json(), list)
     print("[OK] HTTP test: /api/export/leads")
@@ -254,7 +260,7 @@ def test_contact_persist_and_export():
     assert lead.branch == "Университет"
     assert lead.result.cefr_level
 
-    export = client.get("/api/export/leads").json()
+    export = client.get("/api/export/leads", headers={"X-API-Key": TEST_EXPORT_KEY}).json()
     saved = next((item for item in export if item["session_id"] == sid), None)
     assert saved is not None
     assert saved.get("branch") == "Университет"
@@ -290,6 +296,9 @@ def test_lead_card_format():
     assert "B2 — Upper-Intermediate" in card
     assert "<code>+998 (90) 123-45-67</code>" in card
     assert "21.09.2026 14:30" in card
+    # Графическая шкала удалена из карточек по фидбеку пользователя
+    assert "Шкала" not in card
+    assert "\U0001F7E9" not in card
 
     # Проверка единой брендированной карточки
     client = TestClient(app)
@@ -307,7 +316,21 @@ def test_lead_card_format():
     assert "STANFORD LANGUAGE CENTER" in unified
     assert "🏢 <b>Филиал:</b> Главный офис" in unified
     assert "👤 <b>Кандидат:</b> Иван Петров" in unified
-    print("[OK] HTTP test: lead card format with branch")
+    # Графическая шкала удалена из карточек по фидбеку пользователя
+    assert "Шкала" not in unified
+    assert "\U0001F7E9" not in unified
+
+    detail = format_result_card(
+        name="Иван Петров",
+        phone="+998 (90) 123-45-67",
+        username="ivan_petrov",
+        result=result_data,
+        branch="Университет",
+    )
+    assert "Шкала" not in detail
+    assert "\U0001F7E9" not in detail
+    assert "Итоговый уровень" in detail
+    print("[OK] HTTP test: lead card format with branch (no progress scale)")
 
 
 def test_init_data_validation():
@@ -356,6 +379,27 @@ def test_timeout_answers_allowed():
     print("[OK] HTTP test: timeout answers allowed and counted as incorrect")
 
 
+def test_export_leads_requires_api_key():
+    """Эндпоинт экспорта лидов отдаёт PII и обязан быть закрыт ключом."""
+    client = TestClient(app)
+
+    # 1. Без заголовка — 401
+    res = client.get("/api/export/leads")
+    assert res.status_code == 401, res.status_code
+    assert "X-API-Key" in res.json()["detail"]
+
+    # 2. С неверным ключом — 401
+    res = client.get("/api/export/leads", headers={"X-API-Key": "wrong-key"})
+    assert res.status_code == 401, res.status_code
+
+    # 3. С корректным ключом — 200 и список
+    res = client.get("/api/export/leads", headers={"X-API-Key": TEST_EXPORT_KEY})
+    assert res.status_code == 200, res.status_code
+    assert isinstance(res.json(), list)
+
+    print("[OK] HTTP test: /api/export/leads protected by X-API-Key")
+
+
 if __name__ == "__main__":
     test_health_endpoint()
     test_catalog_endpoint()
@@ -371,4 +415,5 @@ if __name__ == "__main__":
     test_contact_persist_and_export()
     test_lead_card_format()
     test_init_data_validation()
+    test_export_leads_requires_api_key()
     print("[OK] ALL HTTP-LAYER TESTS PASSED!")

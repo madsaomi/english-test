@@ -4,6 +4,11 @@
     "builder": "DOCKERFILE",
     "dockerfilePath": "Dockerfile"
   },
+  "volumes": {
+    "lead-data": {
+      "mountPath": "/app/data"
+    }
+  },
   "deploy": {
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 100,

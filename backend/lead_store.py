@@ -10,11 +10,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from .config import DATA_DIR
 from .models import TestResult
 
 logger = logging.getLogger("lead_store")
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 LEADS_FILE = DATA_DIR / "leads.json"
 
 

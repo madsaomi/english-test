@@ -26,10 +26,29 @@ EXPORTS_DIR.mkdir(exist_ok=True)
 
 LEADS_ENDPOINT = "/api/export/leads"
 
-def fetch_leads(api_url: str):
-    """Запрашивает реальные лиды с бэкенда по /api/export/leads."""
+
+def _load_api_key() -> str:
+    """Читает EXPORT_API_KEY из переменной окружения или из локального .env."""
+    key = os.getenv("EXPORT_API_KEY", "").strip()
+    if key:
+        return key
+    env_file = BASE_DIR / ".env"
+    if env_file.exists():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            if line.strip().startswith("EXPORT_API_KEY"):
+                return line.split("=", 1)[1].strip()
+    return ""
+
+
+def fetch_leads(api_url: str, api_key: str = ""):
+    """Запрашивает реальные лиды с бэкенда по /api/export/leads.
+
+    Эндпоинт защищён заголовком X-API-Key (см. EXPORT_API_KEY в .env).
+    """
     url = api_url.rstrip("/") + LEADS_ENDPOINT
     req = urllib.request.Request(url)
+    if api_key:
+        req.add_header("X-API-Key", api_key)
     with urllib.request.urlopen(req, timeout=10) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
@@ -39,12 +58,15 @@ def export_leads(api_url: str = "http://127.0.0.1:8000"):
 
     leads_data = []
     server_ok = False
+    api_key = _load_api_key()
+    if not api_key:
+        print("⚠️ EXPORT_API_KEY не задан — сервер вернёт 401. Проверь .env.")
     try:
-        leads_data = fetch_leads(api_url)
+        leads_data = fetch_leads(api_url, api_key)
         server_ok = True
         print(f"  Получено записей с сервера: {len(leads_data)}")
     except Exception as e:
-        print(f"⚠️ Не удалось подключиться к серверу: {e}")
+        print(f"⚠️ Не удалось получить лиды с сервера: {e}")
 
     if server_ok and not leads_data:
         print("  Сервер вернул пустой список реальных лидов.")

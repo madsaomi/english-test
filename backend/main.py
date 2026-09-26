@@ -8,13 +8,22 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import parse_qsl
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from typing import List, Optional
-from .config import HOST, PORT, IS_BOT_ENABLED, BOT_TOKEN, ADMIN_CHAT_ID, WEBAPP_URL, ALLOWED_ORIGINS
+from .config import (
+    HOST,
+    PORT,
+    IS_BOT_ENABLED,
+    BOT_TOKEN,
+    ADMIN_CHAT_ID,
+    WEBAPP_URL,
+    ALLOWED_ORIGINS,
+    EXPORT_API_KEY,
+)
 from .models import (
     StartTestRequest,
     StartTestResponse,
@@ -331,7 +340,19 @@ class LeadExportItem(BaseModel):
     weak_topics: List[str] = []
 
 @app.get("/api/export/leads")
-async def export_leads():
+async def export_leads(x_api_key: Optional[str] = Header(default=None, alias="X-API-Key")):
+    # Эндпоинт отдаёт персональные данные (ФИО, телефон, Telegram) — защищён ключом.
+    if not EXPORT_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="Экспорт лидов отключён: не задан EXPORT_API_KEY на сервере"
+        )
+    if not x_api_key or not hmac.compare_digest(x_api_key, EXPORT_API_KEY):
+        raise HTTPException(
+            status_code=401,
+            detail="Требуется корректный заголовок X-API-Key"
+        )
+
     leads: List[LeadExportItem] = []
     for lead in lead_store.list_leads():
         leads.append(LeadExportItem(

@@ -182,6 +182,71 @@ def run_integrity_check():
             errors_count += 1
         log_check(f"Файл {sf.relative_to(BASE_DIR)}", exists, "Файл отсутствует или пуст")
 
+    # 6. Проверка безопасности и персистентности (PLAN-015)
+    print(f"\n{BOLD}6. Проверка безопасности и персистентности:{RESET}")
+    try:
+        main_py = (BASE_DIR / "backend" / "main.py").read_text(encoding="utf-8")
+        config_py = (BASE_DIR / "backend" / "config.py").read_text(encoding="utf-8")
+        lead_store_py = (BASE_DIR / "backend" / "lead_store.py").read_text(encoding="utf-8")
+        env_example = (BASE_DIR / ".env.example").read_text(encoding="utf-8")
+        railway = (BASE_DIR / "railway.json").read_text(encoding="utf-8")
+        gitignore = (BASE_DIR / ".gitignore").read_text(encoding="utf-8")
+
+        # Экспорт лидов (PII) обязан быть закрыт ключом
+        export_protected = (
+            'alias="X-API-Key"' in main_py
+            and "EXPORT_API_KEY" in main_py
+            and "status_code=401" in main_py.replace(" ", "").replace("status_code = 401", "status_code=401")
+        )
+        if not export_protected:
+            errors_count += 1
+        log_check("Эндпоинт /api/export/leads защищён X-API-Key", export_protected,
+                  "В backend/main.py нет проверки заголовка X-API-Key")
+
+        key_in_config = "EXPORT_API_KEY" in config_py
+        if not key_in_config:
+            errors_count += 1
+        log_check("EXPORT_API_KEY читается из env в backend/config.py", key_in_config,
+                  "Переменная не объявлена в config.py")
+
+        data_dir_config = "DATA_DIR" in config_py and "from .config import DATA_DIR" in lead_store_py
+        if not data_dir_config:
+            errors_count += 1
+        log_check("DATA_DIR настраивается через env и используется в lead_store", data_dir_config,
+                  "lead_store.py должен импортировать DATA_DIR из config")
+
+        volume_ok = '"volumes"' in railway and "/app/data" in railway
+        if not volume_ok:
+            errors_count += 1
+        log_check("Railway: volume примонтирован в /app/data", volume_ok,
+                  "В railway.json нет volumes с mountPath /app/data")
+
+        env_documented = "EXPORT_API_KEY" in env_example and "DATA_DIR" in env_example
+        if not env_documented:
+            errors_count += 1
+        log_check("Новые переменные документированы в .env.example", env_documented,
+                  "Добавь EXPORT_API_KEY и DATA_DIR в .env.example")
+
+        leads_ignored = "data/leads.json" in gitignore
+        if not leads_ignored:
+            errors_count += 1
+        log_check("Лиды (data/leads.json) не попадают в git", leads_ignored,
+                  "Добавь data/leads.json в .gitignore")
+
+        # Секреты не должны попадать в код
+        secrets_in_code = []
+        for py_file in (BASE_DIR / "backend").glob("*.py"):
+            content = py_file.read_text(encoding="utf-8", errors="ignore")
+            if "8935002748" in content or "8804738116" in content:
+                secrets_in_code.append(py_file.name)
+        if secrets_in_code:
+            errors_count += 1
+        log_check("Токены и ID чата не зашиты в код", not secrets_in_code,
+                  f"Найдено в: {secrets_in_code}")
+    except Exception as e:
+        errors_count += 1
+        log_check("Проверка безопасности и персистентности", False, str(e))
+
     # Итоговый вывод
     print(f"\n{BOLD}{CYAN}===================================================={RESET}")
     if errors_count == 0:

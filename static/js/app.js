@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements - Question Screen
   const qCounter = document.getElementById('q-counter');
   const progressFill = document.getElementById('progress-fill');
+  const timerBadge = document.getElementById('timer-badge');
   const timerText = document.getElementById('timer-text');
   const qText = document.getElementById('q-text');
   const optionsContainer = document.getElementById('options-container');
@@ -58,6 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputUserName = document.getElementById('input-user-name');
   const inputUserPhone = document.getElementById('input-user-phone');
   const inputUserTg = document.getElementById('input-user-tg');
+  const inputUserBranch = document.getElementById('input-user-branch');
+  const branchButtons = document.querySelectorAll('.branch-btn');
   const btnSendTg = document.getElementById('btn-send-tg');
   const tgSuccessMessage = document.getElementById('tg-success-message');
 
@@ -125,6 +128,24 @@ document.addEventListener('DOMContentLoaded', () => {
   btnRestartTest.addEventListener('click', resetToWelcome);
   tgSubmitForm.addEventListener('submit', handleTelegramSubmit);
 
+  if (branchButtons && branchButtons.length > 0) {
+    branchButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        branchButtons.forEach(b => {
+          b.classList.remove('is-active');
+          b.setAttribute('aria-checked', 'false');
+        });
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-checked', 'true');
+        const branchVal = btn.dataset.branch || 'Главный офис';
+        if (inputUserBranch) {
+          inputUserBranch.value = branchVal;
+        }
+        triggerHaptic('light');
+      });
+    });
+  }
+
   [inputUserName, inputUserPhone].forEach((input) => {
     input.addEventListener('input', () => {
       const group = input.closest('.form-group');
@@ -136,36 +157,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // International Phone mask supporting Uzbekistan (+998), Russia/KZ (+7), and other international formats
-  function maskPhone(raw) {
-    let d = raw.replace(/\D/g, '');
-    if (!d) return '';
-    // Uzbekistan prefix (998)
-    if (d.startsWith('998')) {
-      d = d.slice(0, 12);
-      let out = '+998';
-      if (d.length > 3) out += ' (' + d.slice(3, 5);
-      if (d.length >= 5) out += ')';
-      if (d.length > 5) out += ' ' + d.slice(5, 8);
-      if (d.length > 8) out += '-' + d.slice(8, 10);
-      if (d.length > 10) out += '-' + d.slice(10, 12);
-      return out;
+  // Uzbekistan Phone mask (+998 (XX) XXX-XX-XX) — fixed non-erasable prefix, strictly 9 digits
+  const UZ_PREFIX = '+998 ';
+
+  function maskUzPhone(raw) {
+    let digits = String(raw || '').replace(/\D/g, '');
+    if (digits.startsWith('998')) {
+      digits = digits.slice(3);
     }
-    // Russia / Kazakhstan prefix (7 or 8)
-    if (d.startsWith('7') || d.startsWith('8')) {
-      if (d.startsWith('8')) d = '7' + d.slice(1);
-      d = d.slice(0, 11);
-      let out = '+7';
-      if (d.length > 1) out += ' (' + d.slice(1, 4);
-      if (d.length >= 4) out += ')';
-      if (d.length > 4) out += ' ' + d.slice(4, 7);
-      if (d.length > 7) out += '-' + d.slice(7, 9);
-      if (d.length > 9) out += '-' + d.slice(9, 11);
-      return out;
+    // Limit to exactly 9 digits of the subscriber number
+    digits = digits.slice(0, 9);
+
+    if (digits.length === 0) {
+      return UZ_PREFIX;
     }
-    // Other international numbers
-    d = d.slice(0, 15);
-    return '+' + d;
+    let out = '+998 (';
+    out += digits.slice(0, 2);
+    if (digits.length >= 2) out += ') ';
+    if (digits.length > 2) out += digits.slice(2, 5);
+    if (digits.length >= 5) out += '-';
+    if (digits.length > 5) out += digits.slice(5, 7);
+    if (digits.length >= 7) out += '-';
+    if (digits.length > 7) out += digits.slice(7, 9);
+    return out;
   }
 
   function countDigits(str, idx) {
@@ -173,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function caretAtDigit(formatted, n) {
-    if (n <= 0) return 0;
+    if (n <= 0) return UZ_PREFIX.length;
     let seen = 0;
     for (let i = 0; i < formatted.length; i++) {
       if (formatted[i] >= '0' && formatted[i] <= '9') {
@@ -184,38 +198,57 @@ document.addEventListener('DOMContentLoaded', () => {
     return formatted.length;
   }
 
+  inputUserPhone.addEventListener('focus', () => {
+    if (!inputUserPhone.value || inputUserPhone.value.trim() === '' || inputUserPhone.value.trim() === '+998') {
+      inputUserPhone.value = UZ_PREFIX;
+      setTimeout(() => {
+        inputUserPhone.setSelectionRange(UZ_PREFIX.length, UZ_PREFIX.length);
+      }, 0);
+    }
+  });
+
+  inputUserPhone.addEventListener('click', () => {
+    if (inputUserPhone.selectionStart < UZ_PREFIX.length) {
+      inputUserPhone.setSelectionRange(UZ_PREFIX.length, UZ_PREFIX.length);
+    }
+  });
+
   inputUserPhone.addEventListener('input', () => {
     const el = inputUserPhone;
     const digitsBefore = countDigits(el.value, el.selectionStart);
-    const formatted = maskPhone(el.value);
+    const formatted = maskUzPhone(el.value);
     el.value = formatted;
-    const pos = caretAtDigit(formatted, digitsBefore);
+    const pos = Math.max(UZ_PREFIX.length, caretAtDigit(formatted, digitsBefore));
     el.setSelectionRange(pos, pos);
   });
 
   inputUserPhone.addEventListener('keydown', (e) => {
-    if (e.key !== 'Backspace') return;
     const el = inputUserPhone;
-    if (el.selectionStart !== el.selectionEnd) return;
-    const pos = el.selectionStart;
-    const v = el.value;
-    if (pos > 0 && pos === v.length && /\D/.test(v[pos - 1])) {
-      e.preventDefault();
-      let i = pos - 1;
-      while (i >= 0 && /\D/.test(v[i])) i--;
-      if (i >= 0 && /\d/.test(v[i])) {
-        const n = countDigits(v, i);
-        if (n === 0) {
-          el.value = '';
-          return;
+    if (e.key === 'Backspace') {
+      if (el.selectionStart <= UZ_PREFIX.length && el.selectionEnd <= UZ_PREFIX.length) {
+        e.preventDefault();
+        el.setSelectionRange(UZ_PREFIX.length, UZ_PREFIX.length);
+        return;
+      }
+      if (el.selectionStart !== el.selectionEnd) return;
+      const pos = el.selectionStart;
+      const v = el.value;
+      if (pos > UZ_PREFIX.length && /\D/.test(v[pos - 1])) {
+        e.preventDefault();
+        let i = pos - 1;
+        while (i >= UZ_PREFIX.length && /\D/.test(v[i])) i--;
+        if (i >= UZ_PREFIX.length && /\d/.test(v[i])) {
+          const n = countDigits(v, i);
+          const nv = v.slice(0, i) + v.slice(i + 1);
+          const formatted = maskUzPhone(nv);
+          el.value = formatted;
+          const p = Math.max(UZ_PREFIX.length, caretAtDigit(formatted, n));
+          el.setSelectionRange(p, p);
         }
-        const nv = v.slice(0, i) + v.slice(i + 1);
-        const formatted = maskPhone(nv);
-        el.value = formatted;
-        const p = caretAtDigit(formatted, n);
-        el.setSelectionRange(p, p);
-      } else {
-        el.value = '';
+      }
+    } else if (e.key === 'ArrowLeft' || e.key === 'Home') {
+      if (el.selectionStart <= UZ_PREFIX.length) {
+        setTimeout(() => el.setSelectionRange(UZ_PREFIX.length, UZ_PREFIX.length), 0);
       }
     }
   });
@@ -444,15 +477,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Timer helper
+  let questionTimeLimit = 30; // 30s for choice, 35s for text
+
   function startQuestionTimer() {
     stopQuestionTimer();
-    secondsElapsed = 0;
+    questionTimeLimit = currentQuestion?.question_type === 'text' ? 35 : 30;
     questionStartTime = Date.now();
-    updateTimerDisplay();
+    updateTimerDisplay(questionTimeLimit);
+
+    if (timerBadge) {
+      timerBadge.classList.remove('timer-warning');
+    }
+
     timerInterval = setInterval(() => {
-      secondsElapsed++;
-      updateTimerDisplay();
-    }, 1000);
+      const elapsedSeconds = Math.floor((Date.now() - questionStartTime) / 1000);
+      const remaining = Math.max(0, questionTimeLimit - elapsedSeconds);
+      updateTimerDisplay(remaining);
+
+      if (remaining <= 5 && timerBadge) {
+        timerBadge.classList.add('timer-warning');
+      }
+
+      if (remaining <= 0) {
+        stopQuestionTimer();
+        handleQuestionTimeout();
+      }
+    }, 250);
   }
 
   function stopQuestionTimer() {
@@ -460,12 +510,63 @@ document.addEventListener('DOMContentLoaded', () => {
       clearInterval(timerInterval);
       timerInterval = null;
     }
+    if (timerBadge) {
+      timerBadge.classList.remove('timer-warning');
+    }
   }
 
-  function updateTimerDisplay() {
-    const mins = Math.floor(secondsElapsed / 60);
-    const secs = secondsElapsed % 60;
+  function updateTimerDisplay(remaining) {
+    const mins = Math.floor(remaining / 60);
+    const secs = remaining % 60;
     timerText.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+
+  async function handleQuestionTimeout() {
+    if (isAnswering || !currentQuestion) return;
+    isAnswering = true;
+    triggerHaptic('error');
+
+    showToast('Время вышло! Переход к следующему вопросу');
+
+    const isText = currentQuestion.question_type === 'text';
+    const textInput = document.getElementById('text-answer-input');
+    const typedValue = textInput ? textInput.value.trim() : '';
+
+    if (textInput) textInput.disabled = true;
+    const textBtn = document.getElementById('text-answer-btn');
+    if (textBtn) textBtn.disabled = true;
+
+    document.querySelectorAll('.option-card').forEach(c => {
+      c.style.pointerEvents = 'none';
+    });
+
+    try {
+      const payload = {
+        session_id: sessionId,
+        question_id: currentQuestion.id,
+        time_spent_seconds: questionTimeLimit,
+        is_timeout: true
+      };
+
+      if (isText) {
+        payload.selected_text = typedValue;
+      } else {
+        payload.selected_option = -1;
+      }
+
+      const data = await postAnswer(payload);
+
+      setTimeout(() => {
+        if (data.is_finished && data.result) {
+          renderResult(data.result);
+          showScreen(screenResult);
+        } else if (data.next_question) {
+          renderQuestion(data.next_question);
+        }
+      }, 400);
+    } catch (err) {
+      handleAnswerError(err);
+    }
   }
 
   // 1. START TEST
@@ -567,6 +668,10 @@ document.addEventListener('DOMContentLoaded', () => {
           e.preventDefault();
           submitTextAnswer();
         }
+      });
+      textInput.addEventListener('paste', (e) => {
+        e.preventDefault();
+        showToast('Вставка текста запрещена. Введите ответ вручную.');
       });
       setTimeout(() => textInput.focus(), 50);
     } else {
@@ -707,6 +812,19 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSendTg.disabled = false;
     btnSendTg.classList.remove('is-loading');
     btnSendTg.innerHTML = TG_BTN_DEFAULT_HTML;
+
+    // Reset phone to Uzbekistan prefix
+    if (inputUserPhone) inputUserPhone.value = UZ_PREFIX;
+
+    // Reset branch selection to default
+    if (inputUserBranch) inputUserBranch.value = 'Главный офис';
+    if (branchButtons && branchButtons.length > 0) {
+      branchButtons.forEach(btn => {
+        const isDefault = (btn.dataset.branch === 'Главный офис');
+        btn.classList.toggle('is-active', isDefault);
+        btn.setAttribute('aria-checked', isDefault ? 'true' : 'false');
+      });
+    }
   }
 
   // 5. FORM VALIDATION
@@ -740,6 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const name = inputUserName.value.trim();
     const phone = inputUserPhone.value.trim();
     const tgUsername = inputUserTg.value.trim().replace(/^@/, '');
+    const branch = inputUserBranch ? (inputUserBranch.value || 'Главный офис') : 'Главный офис';
 
     clearFieldErrors();
     let firstInvalid = null;
@@ -747,9 +866,9 @@ document.addEventListener('DOMContentLoaded', () => {
       setFieldError(inputUserName, 'Укажите имя');
       firstInvalid = firstInvalid || inputUserName;
     }
-    const phoneDigits = phone.replace(/\D/g, '');
-    if (phoneDigits.length < 9 || phoneDigits.length > 15) {
-      setFieldError(inputUserPhone, 'Введите корректный номер телефона (от 9 цифр)');
+    const uzDigits = phone.replace(/\D/g, '').replace(/^998/, '');
+    if (uzDigits.length !== 9) {
+      setFieldError(inputUserPhone, 'Введите номер полностью: +998 (XX) XXX-XX-XX (9 цифр)');
       firstInvalid = firstInvalid || inputUserPhone;
     }
     if (firstInvalid) {
@@ -772,7 +891,8 @@ document.addEventListener('DOMContentLoaded', () => {
           phone: phone || null,
           telegram_username: tgUsername || null,
           tg_user_id: tgUser ? tgUser.id : null,
-          tg_init_data: tg ? tg.initData : null
+          tg_init_data: tg ? tg.initData : null,
+          branch: branch
         })
       });
 
@@ -800,4 +920,130 @@ document.addEventListener('DOMContentLoaded', () => {
     isAnswering = false;
     showScreen(screenWelcome);
   }
+
+  // ----------------- 7. ANTI-COPY & ANTI-SCREENSHOT PROTECTION -----------------
+  // Enable Telegram WebApp closing confirmation
+  if (tg && typeof tg.enableClosingConfirmation === 'function') {
+    try {
+      tg.enableClosingConfirmation();
+    } catch (e) {
+      console.warn('enableClosingConfirmation not supported:', e);
+    }
+  }
+
+  // A. Block context menu (right click & mobile long press)
+  document.addEventListener('contextmenu', (e) => {
+    if (isTestActive) {
+      e.preventDefault();
+      showToast('Контекстное меню отключено на время теста');
+    }
+  });
+
+  // B. Block copy, cut, and dragstart on test screen
+  document.addEventListener('copy', (e) => {
+    if (isTestActive) {
+      e.preventDefault();
+      showToast('Копирование вопросов запрещено');
+    }
+  });
+
+  document.addEventListener('cut', (e) => {
+    if (isTestActive) {
+      e.preventDefault();
+    }
+  });
+
+  document.addEventListener('dragstart', (e) => {
+    if (isTestActive) {
+      e.preventDefault();
+    }
+  });
+
+  // C. Block devtools, print, save, and copy hotkeys
+  document.addEventListener('keydown', (e) => {
+    // PrintScreen detection & clipboard wiping
+    if (e.key === 'PrintScreen' || e.keyCode === 44) {
+      if (isTestActive) {
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText('');
+          }
+        } catch (err) {}
+        showToast('Создание снимков экрана запрещено');
+      }
+      return;
+    }
+
+    if (!isTestActive) return;
+
+    const isCtrl = e.ctrlKey || e.metaKey;
+    const key = e.key ? e.key.toLowerCase() : '';
+
+    // Ctrl+C, Ctrl+X, Ctrl+U (view source), Ctrl+S (save), Ctrl+P (print)
+    if (isCtrl && (key === 'c' || key === 'x' || key === 'u' || key === 's' || key === 'p')) {
+      // Allow copy in form input only on result screen
+      if (activeScreen === screenResult) return;
+      e.preventDefault();
+      showToast('Горячие клавиши копирования/сохранения отключены');
+      return;
+    }
+
+    // F12 or Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C (DevTools)
+    if (e.key === 'F12' || (isCtrl && e.shiftKey && (key === 'i' || key === 'j' || key === 'c'))) {
+      e.preventDefault();
+      showToast('Инструменты разработчика отключены');
+    }
+  });
+
+  // D. Blur shield on tab switch / window blur during active test
+  let focusOverlay = null;
+
+  function showFocusWarning() {
+    if (!isTestActive || focusOverlay) return;
+    if (screenQuestion) screenQuestion.classList.add('test-blur-shield');
+
+    focusOverlay = document.createElement('div');
+    focusOverlay.className = 'focus-warning-overlay';
+    focusOverlay.innerHTML = `
+      <div class="focus-warning-box">
+        <div class="focus-warning-icon">🛡️</div>
+        <div class="focus-warning-title">Тестирование приостановлено</div>
+        <div class="focus-warning-desc">
+          Переключение окон и создание скриншотов во время прохождения теста запрещено. Вернитесь к тесту для продолжения.
+        </div>
+        <button type="button" class="focus-warning-btn" id="btn-return-focus">Вернуться к тесту</button>
+      </div>
+    `;
+    document.body.appendChild(focusOverlay);
+
+    const btnReturn = document.getElementById('btn-return-focus');
+    if (btnReturn) {
+      btnReturn.addEventListener('click', hideFocusWarning);
+    }
+  }
+
+  function hideFocusWarning() {
+    if (focusOverlay) {
+      focusOverlay.remove();
+      focusOverlay = null;
+    }
+    if (screenQuestion) screenQuestion.classList.remove('test-blur-shield');
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      if (isTestActive) showFocusWarning();
+    }
+  });
+
+  window.addEventListener('blur', () => {
+    // Only show if active element is not an input inside our form
+    if (isTestActive && document.activeElement !== document.getElementById('text-answer-input')) {
+      showFocusWarning();
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    // Keep overlay until user explicitly clicks "Return" button or dismisses
+  });
 });

@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import json
 import logging
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -188,11 +189,14 @@ async def answer_question(payload: AnswerSubmission):
         )
         raise HTTPException(status_code=404, detail="Вопрос не найден")
 
-    if question.question_type == "text":
+    if payload.is_timeout:
+        # Автоматический таймаут (30/35 сек истекли)
+        pass
+    elif question.question_type == "text":
         if payload.selected_text is None or not payload.selected_text.strip():
             raise HTTPException(status_code=400, detail="Введите ответ")
     else:
-        if payload.selected_option is None:
+        if payload.selected_option is None or payload.selected_option < 0:
             raise HTTPException(status_code=400, detail="Не выбран вариант ответа")
 
     is_correct = cat_engine.submit_answer(
@@ -201,6 +205,7 @@ async def answer_question(payload: AnswerSubmission):
         selected_option=payload.selected_option,
         time_spent=payload.time_spent_seconds,
         selected_text=payload.selected_text,
+        is_timeout=payload.is_timeout,
     )
 
     should_end = cat_engine.should_finish(session)
@@ -248,6 +253,14 @@ async def submit_user_contact(payload: UserContactSubmission):
     if not payload.phone or not payload.phone.strip():
         raise HTTPException(status_code=400, detail="Телефон обязателен")
 
+    phone_clean = re.sub(r"\D", "", payload.phone)
+    if not (len(phone_clean) == 12 and phone_clean.startswith("998")):
+        raise HTTPException(
+            status_code=400,
+            detail="Номер телефона должен быть в формате Узбекистана: +998 (XX) XXX-XX-XX"
+        )
+    formatted_phone = f"+998 ({phone_clean[3:5]}) {phone_clean[5:8]}-{phone_clean[8:10]}-{phone_clean[10:12]}"
+
     session = cat_engine.get_session(payload.session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Сессия тестирования не найдена")
@@ -268,10 +281,12 @@ async def submit_user_contact(payload: UserContactSubmission):
         except (ValueError, TypeError):
             pass
 
-    session.user_name = payload.name
-    session.user_phone = payload.phone
+    session.user_name = payload.name.strip()
+    session.user_phone = formatted_phone
     session.tg_username = payload.telegram_username
     session.tg_user_id = payload.tg_user_id
+    branch_val = (payload.branch or "Главный офис").strip()
+    session.branch = branch_val
 
     lead = LeadRecord(
         session_id=payload.session_id,
@@ -281,13 +296,14 @@ async def submit_user_contact(payload: UserContactSubmission):
         tg_user_id=session.tg_user_id,
         test_id=session.test_id,
         received_at=datetime.now(),
-        result=session.result
+        result=session.result,
+        branch=branch_val,
     )
     lead_store.add_lead(lead)
 
     sent_admin = await send_admin_lead_notification(lead)
     sent_student = await send_student_full_result(
-        name=lead.student_name, tg_user_id=lead.tg_user_id, result=lead.result
+        name=lead.student_name, tg_user_id=lead.tg_user_id, result=lead.result, branch=lead.branch
     )
     sent = sent_admin or sent_student
     session.result.telegram_sent = sent
@@ -305,6 +321,7 @@ class LeadExportItem(BaseModel):
     student_name: Optional[str] = None
     phone: Optional[str] = None
     telegram_username: Optional[str] = None
+    branch: Optional[str] = "Главный офис"
     test_id: Optional[str] = None
     cefr_level: Optional[str] = None
     level_title: Optional[str] = None
@@ -322,6 +339,7 @@ async def export_leads():
             student_name=lead.student_name,
             phone=lead.phone,
             telegram_username=lead.telegram_username,
+            branch=getattr(lead, "branch", "Главный офис") or "Главный офис",
             test_id=lead.test_id,
             cefr_level=lead.result.cefr_level,
             level_title=lead.result.level_title,

@@ -23,12 +23,13 @@ class LeadRecord:
 
     __slots__ = (
         "session_id", "student_name", "phone", "telegram_username", "tg_user_id",
-        "test_id", "received_at", "result"
+        "test_id", "received_at", "result", "branch"
     )
 
     def __init__(self, session_id: str, student_name: str, phone: str,
                  telegram_username: Optional[str], tg_user_id: Optional[int],
-                 test_id: str, received_at: datetime, result: TestResult):
+                 test_id: str, received_at: datetime, result: TestResult,
+                 branch: Optional[str] = "Главный офис"):
         self.session_id = session_id
         self.student_name = student_name
         self.phone = phone
@@ -37,6 +38,7 @@ class LeadRecord:
         self.test_id = test_id
         self.received_at = received_at
         self.result = result
+        self.branch = branch or "Главный офис"
 
     def to_dict(self) -> dict:
         return {
@@ -48,6 +50,7 @@ class LeadRecord:
             "test_id": self.test_id,
             "received_at": self.received_at.isoformat(timespec="seconds"),
             "result": self.result.model_dump() if hasattr(self.result, "model_dump") else dict(self.result),
+            "branch": self.branch,
         }
 
 
@@ -70,6 +73,7 @@ def _load_from_disk() -> Dict[str, LeadRecord]:
                 test_id=item.get("test_id", ""),
                 received_at=datetime.fromisoformat(item.get("received_at", "")),
                 result=TestResult(**item.get("result", {})),
+                branch=item.get("branch", "Главный офис"),
             )
             records[sid] = record
     except Exception as e:

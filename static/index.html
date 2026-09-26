@@ -25,6 +25,14 @@
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+  <!-- Ambient Side Logos (Smooth Floating Crests) -->
+  <div class="ambient-crest ambient-crest-left" aria-hidden="true">
+    <img src="/logo.png" alt="" width="260" height="260">
+  </div>
+  <div class="ambient-crest ambient-crest-right" aria-hidden="true">
+    <img src="/logo.png" alt="" width="260" height="260">
+  </div>
+
   <header class="site-header">
     <div class="brand">
       <a class="brand-chip" href="#" aria-label="Stanford Language Center">
@@ -35,7 +43,6 @@
         <span>language center</span>
       </div>
     </div>
-    <a class="btn btn-dark header-cta" href="#start-test">Пройти тест <span class="arrow-icon">→</span></a>
   </header>
 
   <div class="app-container">
@@ -43,48 +50,17 @@
       <!-- SCREEN 1: WELCOME / CATALOG -->
       <section class="screen active" id="screen-welcome" aria-labelledby="welcome-title">
         <div class="hero-card" id="start-test">
-          <p class="eyebrow center">STANFORD LANGUAGE CENTER • OFFICIAL ASSESSMENT</p>
-          <h1 class="hero-title" id="welcome-title">Тестирование уровня <span class="highlight-text">английского</span></h1>
+          <div class="hero-logo" aria-hidden="true">
+            <img src="/logo.png" alt="Stanford Language Center" width="110" height="110">
+          </div>
+          <h1 class="hero-title" id="welcome-title">Тест уровня <span class="highlight-text">английского</span></h1>
 
-          <ul class="welcome-meta" aria-label="О тесте">
-            <li class="meta-item">
-              <div class="meta-icon-wrapper">
-                <svg class="meta-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-              </div>
-              <div class="meta-text">
-                <strong>50</strong><span>вопросов</span>
-              </div>
-            </li>
-            <li class="meta-item">
-              <div class="meta-icon-wrapper">
-                <svg class="meta-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-              </div>
-              <div class="meta-text">
-                <strong>~15</strong><span>минут</span>
-              </div>
-            </li>
-            <li class="meta-item">
-              <div class="meta-icon-wrapper">
-                <svg class="meta-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              </div>
-              <div class="meta-text">
-                <strong>6</strong><span>уровней</span>
-              </div>
-            </li>
-          </ul>
-
-          <div class="levels-strip" aria-label="Шкала уровней теста">
-            <span class="level-chip">Beginner</span>
-            <span class="level-arrow">›</span>
-            <span class="level-chip">Elementary</span>
-            <span class="level-arrow">›</span>
-            <span class="level-chip">Pre-Int</span>
-            <span class="level-arrow">›</span>
-            <span class="level-chip">Intermediate</span>
-            <span class="level-arrow">›</span>
-            <span class="level-chip">Upper-Int</span>
-            <span class="level-arrow">›</span>
-            <span class="level-chip highlight">Advanced</span>
+          <div class="hero-meta" aria-label="О тесте">
+            <span>50 вопросов</span>
+            <span class="meta-dot" aria-hidden="true">·</span>
+            <span>15 минут</span>
+            <span class="meta-dot" aria-hidden="true">·</span>
+            <span>A1–C1</span>
           </div>
 
           <div class="test-catalog-section is-hidden" aria-hidden="true">
@@ -166,6 +142,21 @@
             </div>
 
             <form id="tg-submit-form" class="tg-form" novalidate>
+              <div class="form-group branch-group">
+                <label>Ваш филиал *</label>
+                <div class="branch-selector" role="radiogroup" aria-label="Выберите филиал">
+                  <button type="button" class="branch-btn is-active" data-branch="Главный офис" aria-checked="true" role="radio">
+                    <span class="branch-icon">🏛️</span>
+                    <span class="branch-text">Главный офис</span>
+                  </button>
+                  <button type="button" class="branch-btn" data-branch="Университет" aria-checked="false" role="radio">
+                    <span class="branch-icon">🎓</span>
+                    <span class="branch-text">Университет</span>
+                  </button>
+                </div>
+                <input type="hidden" id="input-user-branch" value="Главный офис">
+              </div>
+
               <div class="form-row">
                 <div class="form-group">
                   <label for="input-user-name">Ваше имя *</label>
@@ -178,7 +169,7 @@
                   <label for="input-user-phone">Телефон / WhatsApp *</label>
                   <div class="input-with-icon">
                     <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                    <input type="tel" id="input-user-phone" placeholder="+7 (999) 000-00-00" inputmode="tel" maxlength="18" autocomplete="tel" required>
+                    <input type="tel" id="input-user-phone" placeholder="+998 (90) 123-45-67" inputmode="tel" maxlength="19" autocomplete="tel" required>
                   </div>
                 </div>
               </div>
@@ -228,16 +219,6 @@
     <footer class="site-footer">
       <img class="footer-logo" src="/logo.png" alt="Stanford Language Center" width="56" height="56">
       <span>© 2026 Stanford Language Center</span>
-      <div class="footer-links">
-        <a href="#">Конфиденциальность</a>
-        <span class="footer-dot">·</span>
-        <a href="#">Связаться</a>
-        <span class="footer-dot">·</span>
-        <a href="https://t.me/" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
-          Telegram
-        </a>
-      </div>
     </footer>
   </div>
 

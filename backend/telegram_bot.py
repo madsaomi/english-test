@@ -80,7 +80,8 @@ def format_clean_level(cefr_level: str, level_title: str) -> str:
         return level_title
     return f"{cefr_level} · {level_title}"
 
-def format_result_card(name: str, phone: Optional[str], username: Optional[str], result: TestResult) -> str:
+def format_result_card(name: str, phone: Optional[str], username: Optional[str], result: TestResult,
+                       branch: Optional[str] = "Главный офис") -> str:
     # Графический индикатор
     progress_blocks = "🟩" * (result.score // 10) + "⬜" * (10 - (result.score // 10))
     
@@ -90,6 +91,7 @@ def format_result_card(name: str, phone: Optional[str], username: Optional[str],
 
     user_link = f"@{username.lstrip('@')}" if username else "Не указан"
     phone_str = phone if phone else "Не указан"
+    branch_str = branch if branch else "Главный офис"
     level_str = format_clean_level(result.cefr_level, result.level_title)
 
     skills_lines = []
@@ -102,17 +104,24 @@ def format_result_card(name: str, phone: Optional[str], username: Optional[str],
     else:
         weak_text = "✨ <i>Ошибок нет — безупречный результат!</i>"
 
+    accuracy_line = f"🎯 <b>Точность:</b> {result.correct_count} из {result.total_questions} ({result.accuracy_percentage}%)"
+    if getattr(result, "skipped_count", 0) > 0:
+        accuracy_line += f"\n⏳ <b>Пропущено по таймеру:</b> {result.skipped_count}"
+    else:
+        accuracy_line += "\n⏳ <b>Пропусков по таймеру:</b> 0 (все вопросы отвечены)"
+
     card = (
         "🏛 <b>STANFORD LANGUAGE CENTER • РЕЗУЛЬТАТ ТЕСТИРОВАНИЯ АНГЛИЙСКОГО</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 <b>Кандидат:</b> {name}\n"
+        f"🏢 <b>Филиал:</b> {branch_str}\n"
         f"📱 <b>Телефон:</b> <code>{phone_str}</code>\n"
         f"💬 <b>Telegram:</b> {user_link}\n"
         "━━━━━━━━━━━━━━━━━━━━━\n"
         f"🏆 <b>Итоговый уровень:</b> <b>{level_str}</b>\n"
         f"📊 <b>Общий балл:</b> <b>{result.score}/100</b>\n"
         f"📈 <b>Шкала:</b> [{progress_blocks}]\n"
-        f"🎯 <b>Точность:</b> {result.correct_count} из {result.total_questions} ({result.accuracy_percentage}%)\n"
+        f"{accuracy_line}\n"
         f"⏱ <b>Время теста:</b> {time_str}\n\n"
         f"📚 <b>Детализация по навыкам:</b>\n{skills_text}\n\n"
         f"⚠️ <b>Темы для повторения:</b>\n{weak_text}\n"
@@ -121,12 +130,15 @@ def format_result_card(name: str, phone: Optional[str], username: Optional[str],
     return card
 
 def format_compact_lead_card(name: str, level_code: str, level_title: str,
-                             phone: str, received_at: str) -> str:
+                             phone: str, received_at: str,
+                             branch: Optional[str] = "Главный офис") -> str:
     """Компактная карточка заявки для сотрудника (Вариант A / обратная совместимость)."""
+    branch_str = branch if branch else "Главный офис"
     return (
         "🏷 <b>НОВАЯ ЗАЯВКА С ТЕСТА</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 <b>Имя:</b> {name}\n"
+        f"🏢 <b>Филиал:</b> {branch_str}\n"
         f"🏆 <b>Уровень:</b> {level_code} — {level_title}\n"
         f"📱 <b>Телефон:</b> <code>{phone}</code>\n"
         f"📅 <b>Принято:</b> {received_at}\n"
@@ -134,7 +146,8 @@ def format_compact_lead_card(name: str, level_code: str, level_title: str,
     )
 
 def format_unified_lead_card(name: str, phone: Optional[str], username: Optional[str],
-                             result: TestResult, received_at: str) -> str:
+                             result: TestResult, received_at: str,
+                             branch: Optional[str] = "Главный офис") -> str:
     """Единая брендированная карточка заявки Stanford Language Center."""
     progress_blocks = "🟩" * (result.score // 10) + "⬜" * (10 - (result.score // 10))
     minutes = result.total_time_seconds // 60
@@ -143,6 +156,7 @@ def format_unified_lead_card(name: str, phone: Optional[str], username: Optional
 
     user_link = f"@{username.lstrip('@')}" if username else "Не указан"
     phone_str = phone if phone else "Не указан"
+    branch_str = branch if branch else "Главный офис"
     level_str = format_clean_level(result.cefr_level, result.level_title)
 
     skills_lines = []
@@ -155,10 +169,17 @@ def format_unified_lead_card(name: str, phone: Optional[str], username: Optional
     else:
         weak_text = "✨ <i>Ошибок нет — безупречный результат!</i>"
 
+    accuracy_line = f"🎯 <b>Точность:</b> {result.correct_count} из {result.total_questions} ({result.accuracy_percentage}%)"
+    if getattr(result, "skipped_count", 0) > 0:
+        accuracy_line += f"\n⏳ <b>Пропущено по таймеру:</b> {result.skipped_count}"
+    else:
+        accuracy_line += "\n⏳ <b>Пропусков по таймеру:</b> 0 (все вопросы отвечены)"
+
     card = (
         "🏛 <b>STANFORD LANGUAGE CENTER • РЕЗУЛЬТАТ ТЕСТИРОВАНИЯ АНГЛИЙСКОГО</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 <b>Кандидат:</b> {name}\n"
+        f"🏢 <b>Филиал:</b> {branch_str}\n"
         f"📱 <b>Телефон:</b> <code>{phone_str}</code>\n"
         f"💬 <b>Telegram:</b> {user_link}\n"
         f"📅 <b>Принято:</b> {received_at}\n"
@@ -166,7 +187,7 @@ def format_unified_lead_card(name: str, phone: Optional[str], username: Optional
         f"🏆 <b>Итоговый уровень:</b> <b>{level_str}</b>\n"
         f"📊 <b>Общий балл:</b> <b>{result.score}/100</b>\n"
         f"📈 <b>Шкала:</b> [{progress_blocks}]\n"
-        f"🎯 <b>Точность:</b> {result.correct_count} из {result.total_questions} ({result.accuracy_percentage}%)\n"
+        f"{accuracy_line}\n"
         f"⏱ <b>Время теста:</b> {time_str}\n\n"
         f"📚 <b>Детализация по навыкам:</b>\n{skills_text}\n\n"
         f"⚠️ <b>Темы для повторения:</b>\n{weak_text}\n"
@@ -200,12 +221,14 @@ async def send_admin_lead_notification(lead) -> bool:
         return False
 
     received_at = lead.received_at.strftime("%d.%m.%Y %H:%M")
+    branch = getattr(lead, "branch", "Главный офис") or "Главный офис"
     text = format_unified_lead_card(
         name=lead.student_name,
         phone=lead.phone,
         username=lead.telegram_username,
         result=lead.result,
         received_at=received_at,
+        branch=branch,
     )
     keyboard = get_lead_action_keyboard(lead.phone, lead.telegram_username)
 
@@ -223,14 +246,15 @@ async def send_admin_lead_notification(lead) -> bool:
         return False
 
 
-async def send_student_full_result(name: str, tg_user_id: Optional[int], result: TestResult) -> bool:
+async def send_student_full_result(name: str, tg_user_id: Optional[int], result: TestResult,
+                                  branch: Optional[str] = "Главный офис") -> bool:
     """Отправляет полную карточку результатов самому кандидату (если известен chat_id)."""
     if not IS_BOT_ENABLED or not bot or not tg_user_id:
         return False
     try:
         user_msg = (
             f"🎉 <b>Поздравляем с прохождением теста, {name}!</b>\n\n"
-            f"{format_result_card(name=name, phone=None, username=None, result=result)}\n\n"
+            f"{format_result_card(name=name, phone=None, username=None, result=result, branch=branch)}\n\n"
             "💡 <b>Рекомендации преподавателя:</b>\n" +
             "\n".join([f"✨ {r}" for r in result.recommendations])
         )

@@ -18,7 +18,8 @@ from fastapi.testclient import TestClient
 from backend.main import app, verify_telegram_init_data
 from backend.test_loader import test_repository
 from backend.lead_store import lead_store
-from backend.telegram_bot import format_compact_lead_card
+from backend.telegram_bot import format_compact_lead_card, format_unified_lead_card
+from backend.models import TestResult
 
 
 def test_health_endpoint():
@@ -216,24 +217,32 @@ def test_contact_requires_name_and_phone():
     assert res.status_code == 400
     assert "Телефон" in res.json()["detail"]
 
-    res = client.post("/api/test/submit-contact", json={"session_id": sid, "phone": "+7 999 000-00-00"})
+    res = client.post("/api/test/submit-contact", json={"session_id": sid, "phone": "+998 90 123-45-67"})
     assert res.status_code == 422  # name обязателен в модели
 
-    res = client.post("/api/test/submit-contact", json={"session_id": sid, "name": "", "phone": "+7 999 000-00-00"})
+    res = client.post("/api/test/submit-contact", json={"session_id": sid, "name": "", "phone": "+998 90 123-45-67"})
     assert res.status_code == 400
     assert "ФИО" in res.json()["detail"]
-    print("[OK] HTTP test: contact requires name and phone")
+
+    # Проверка отклонения некорректного номера (например, мусорный или не узбекский)
+    res_bad = client.post("/api/test/submit-contact", json={"session_id": sid, "name": "Тест", "phone": "+122132132132332"})
+    assert res_bad.status_code == 400
+    assert "Узбекистана" in res_bad.json()["detail"]
+
+    print("[OK] HTTP test: contact requires name and phone (Uzbekistan format)")
 
 
 def test_contact_persist_and_export():
     client = TestClient(app)
     sid = _complete_fixed(client)
 
+    # 1. Отправка с явным выбором филиала "Университет"
     resp = client.post("/api/test/submit-contact", json={
         "session_id": sid,
         "name": "Иван Петров",
-        "phone": "+7 999 123-45-67",
+        "phone": "+998 90 123-45-67",
         "telegram_username": "ivan_petrov",
+        "branch": "Университет",
     })
     assert resp.status_code == 200
     assert resp.json()["status"] == "success"
@@ -241,28 +250,64 @@ def test_contact_persist_and_export():
     lead = lead_store.get_lead(sid)
     assert lead is not None
     assert lead.student_name == "Иван Петров"
-    assert lead.phone == "+7 999 123-45-67"
+    assert lead.phone == "+998 (90) 123-45-67"
+    assert lead.branch == "Университет"
     assert lead.result.cefr_level
 
     export = client.get("/api/export/leads").json()
-    assert any(item["session_id"] == sid for item in export)
-    print("[OK] HTTP test: lead persisted and exported")
+    saved = next((item for item in export if item["session_id"] == sid), None)
+    assert saved is not None
+    assert saved.get("branch") == "Университет"
+
+    # 2. Проверка дефолтного филиала "Главный офис"
+    sid2 = _complete_fixed(client)
+    resp2 = client.post("/api/test/submit-contact", json={
+        "session_id": sid2,
+        "name": "Анна Сидорова",
+        "phone": "+998 99 765-43-21",
+    })
+    assert resp2.status_code == 200
+    lead2 = lead_store.get_lead(sid2)
+    assert lead2 is not None
+    assert lead2.phone == "+998 (99) 765-43-21"
+    assert lead2.branch == "Главный офис"
+    print("[OK] HTTP test: lead persisted and exported with branch")
 
 
-def test_compact_lead_card_format():
+def test_lead_card_format():
+    # Проверка компактной карточки
     card = format_compact_lead_card(
         name="Иван Петров",
         level_code="B2",
         level_title="Upper-Intermediate",
-        phone="+7 999 123-45-67",
+        phone="+998 (90) 123-45-67",
         received_at="21.09.2026 14:30",
+        branch="Университет",
     )
     assert "НОВАЯ ЗАЯВКА С ТЕСТА" in card
     assert "Иван Петров" in card
+    assert "Университет" in card
     assert "B2 — Upper-Intermediate" in card
-    assert "<code>+7 999 123-45-67</code>" in card
+    assert "<code>+998 (90) 123-45-67</code>" in card
     assert "21.09.2026 14:30" in card
-    print("[OK] HTTP test: compact lead card format")
+
+    # Проверка единой брендированной карточки
+    client = TestClient(app)
+    sid = _complete_fixed(client)
+    res_resp = client.get(f"/api/test/result/{sid}")
+    result_data = TestResult(**res_resp.json())
+    unified = format_unified_lead_card(
+        name="Иван Петров",
+        phone="+998 (90) 123-45-67",
+        username="ivan_petrov",
+        result=result_data,
+        received_at="25.09.2026 21:30",
+        branch="Главный офис",
+    )
+    assert "STANFORD LANGUAGE CENTER" in unified
+    assert "🏢 <b>Филиал:</b> Главный офис" in unified
+    assert "👤 <b>Кандидат:</b> Иван Петров" in unified
+    print("[OK] HTTP test: lead card format with branch")
 
 
 def test_init_data_validation():
@@ -290,6 +335,27 @@ def test_init_data_validation():
     print("[OK] HTTP test: initData HMAC validation")
 
 
+def test_timeout_answers_allowed():
+    client = TestClient(app)
+    start_res = client.post("/api/test/start").json()
+    sid = start_res["session_id"]
+    first_q = start_res["first_question"]
+
+    # Отправляем ответ по таймауту (is_timeout=True, selected_option=-1)
+    ans_res = client.post("/api/test/answer", json={
+        "session_id": sid,
+        "question_id": first_q["id"],
+        "selected_option": -1,
+        "time_spent_seconds": 30.0,
+        "is_timeout": True
+    })
+    assert ans_res.status_code == 200
+    data = ans_res.json()
+    assert data["is_correct"] is False
+    assert data["next_question"] is not None
+    print("[OK] HTTP test: timeout answers allowed and counted as incorrect")
+
+
 if __name__ == "__main__":
     test_health_endpoint()
     test_catalog_endpoint()
@@ -298,10 +364,11 @@ if __name__ == "__main__":
     test_text_answer_case_sensitive()
     test_text_answer_empty_rejected()
     test_choice_without_option_rejected()
+    test_timeout_answers_allowed()
     test_leads_endpoint()
     test_start_unknown_test_falls_back()
     test_contact_requires_name_and_phone()
     test_contact_persist_and_export()
-    test_compact_lead_card_format()
+    test_lead_card_format()
     test_init_data_validation()
     print("[OK] ALL HTTP-LAYER TESTS PASSED!")

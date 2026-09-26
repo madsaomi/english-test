@@ -31,6 +31,7 @@ class AnswerSubmission(BaseModel):
     selected_option: Optional[int] = None
     selected_text: Optional[str] = None
     time_spent_seconds: float = 0.0
+    is_timeout: bool = False
 
 class UserContactSubmission(BaseModel):
     session_id: str
@@ -39,6 +40,7 @@ class UserContactSubmission(BaseModel):
     telegram_username: Optional[str] = None
     tg_user_id: Optional[int] = None
     tg_init_data: Optional[str] = None
+    branch: Optional[str] = "Главный офис"
 
 class SkillBreakdown(BaseModel):
     category: str
@@ -78,6 +80,7 @@ class TestResult(BaseModel):
     weak_topics: List[str]
     recommendations: List[str]
     review: List[QuestionReviewItem] = []
+    skipped_count: int = 0
     telegram_sent: bool = False
 
 class TestSuiteMeta(BaseModel):

@@ -176,6 +176,7 @@ class CATEngine:
         selected_option: Optional[int] = None,
         time_spent: float = 0.0,
         selected_text: Optional[str] = None,
+        is_timeout: bool = False,
     ) -> bool:
         # Нормализация времени ответа: минимум 0.5 сек (защита от автокликеров, SECURITY_SPEC)
         time_spent = max(0.5, float(time_spent))
@@ -185,7 +186,9 @@ class CATEngine:
         if not q:
             return False
 
-        if q.question_type == "text":
+        if is_timeout and (selected_option is None or selected_option < 0) and not (selected_text or "").strip():
+            is_correct = False
+        elif q.question_type == "text":
             given = (selected_text or "").strip()
             expected = (q.correct_text or "").strip()
             is_correct = bool(given) and given == expected
@@ -218,6 +221,7 @@ class CATEngine:
             "selected_option": selected_option,
             "selected_text": selected_text,
             "is_correct": is_correct,
+            "is_timeout": is_timeout,
             "difficulty": q.difficulty,
             "ability_after": session.ability,
             "time_spent": time_spent,
@@ -331,6 +335,11 @@ class CATEngine:
                 time_spent_seconds=round(float(h.get("time_spent", 0.0)), 1)
             ))
 
+        skipped_count = sum(
+            1 for h in session.history
+            if h.get("is_timeout") or (h.get("selected_option") is not None and h.get("selected_option") < 0)
+        )
+
         result = TestResult(
             session_id=session.session_id,
             cefr_level=cefr_code,
@@ -345,6 +354,7 @@ class CATEngine:
             weak_topics=weak_topics[:4],  # Топ-4 слабых темы
             recommendations=recommendations,
             review=review_items,
+            skipped_count=skipped_count,
             telegram_sent=False
         )
         session.result = result

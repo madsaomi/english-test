@@ -265,6 +265,34 @@ body.theme-dark .theme-icon-moon {
   background: var(--black);
   color: #fff;
   box-shadow: 0 5px 0 #000, 0 14px 28px -16px rgba(0, 0, 0, 0.55);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Диагональный блик, проходящий по кнопке при наведении */
+.btn-dark::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  left: -70%;
+  width: 45%;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 186, 8, 0.35) 45%,
+    rgba(255, 255, 255, 0.55) 55%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-40%) rotate(8deg);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.btn-dark:hover::after {
+  transform: translateX(320%) rotate(8deg);
 }
 
 .btn-dark:hover {
@@ -274,7 +302,7 @@ body.theme-dark .theme-icon-moon {
 }
 
 .btn-dark:active {
-  transform: translateY(2px);
+  transform: translateY(2px) scale(0.99);
   box-shadow: 0 1px 0 #000;
 }
 
@@ -425,19 +453,20 @@ input:focus-visible {
   animation: heroFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Логотип квадратный и содержит надписи — круг срезал бы текст по бокам */
 .hero-logo img {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
+  width: 118px;
+  height: 118px;
+  border-radius: 26px;
   object-fit: cover;
   border: none;
-  box-shadow: 0 8px 30px -6px rgba(16, 16, 16, 0.12);
+  box-shadow: 0 10px 34px -8px rgba(16, 16, 16, 0.18);
   transition: transform var(--transition-normal), box-shadow var(--transition-normal);
 }
 
 .hero-logo img:hover {
-  transform: scale(1.04) translateY(-2px);
-  box-shadow: 0 14px 40px -8px rgba(16, 16, 16, 0.18);
+  transform: scale(1.03) translateY(-2px);
+  box-shadow: 0 16px 44px -10px rgba(16, 16, 16, 0.24);
 }
 
 @keyframes heroFadeUp {
@@ -525,7 +554,22 @@ body.theme-dark .hero-meta {
   align-items: center;
   gap: 12px;
   margin-top: 28px;
+  position: relative;
   animation: heroFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+}
+
+/* Мягкое жёлтое свечение вокруг CTA — «тепло» вместо плоского фона */
+.action-wrap::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(360px, 92%);
+  height: 200px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at center, rgba(255, 186, 8, 0.28), transparent 68%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .action-note {
@@ -885,6 +929,20 @@ body.theme-dark .hero-meta {
   animation: progressShimmer 1.8s ease-in-out infinite;
 }
 
+/* Светящаяся «капля» на конце заливки — показывает, где движок */
+.progress-bar-fill::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  background: var(--yellow-deep);
+  box-shadow: 0 0 0 3px rgba(255, 186, 8, 0.35), 0 0 12px 2px rgba(255, 186, 8, 0.6);
+}
+
 @keyframes progressShimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
@@ -1053,6 +1111,10 @@ body.theme-dark .hero-meta {
   box-shadow: 0 10px 24px -10px rgba(16, 16, 16, 0.25);
 }
 
+.option-card:active {
+  transform: translateY(0) scale(0.985);
+}
+
 .option-card.selected {
   background: linear-gradient(180deg, #ffd666 0%, var(--yellow) 100%);
   border-color: var(--black);
@@ -1077,6 +1139,14 @@ body.theme-dark .hero-meta {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.4);
+  animation: checkPop 0.32s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+/* Галочка «выбрано» появляется с лёгким пружинным pop */
+@keyframes checkPop {
+  0% { transform: translateY(-50%) scale(0.4); opacity: 0; }
+  60% { transform: translateY(-50%) scale(1.12); opacity: 1; }
+  100% { transform: translateY(-50%) scale(1); opacity: 1; }
 }
 
 .option-text {
@@ -1696,8 +1766,9 @@ body.theme-dark .hero-meta {
   }
 
   .hero-logo img {
-    width: 100px;
-    height: 100px;
+    width: 104px;
+    height: 104px;
+    border-radius: 22px;
   }
 
   .option-card {
@@ -1726,6 +1797,16 @@ body.theme-dark .hero-meta {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark theme: свечение CTA и капля прогресса должны быть мягче */
+body.theme-dark .action-wrap::before {
+  background: radial-gradient(ellipse at center, rgba(255, 186, 8, 0.18), transparent 68%);
+}
+
+body.theme-dark .progress-bar-fill::before {
+  background: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(255, 186, 8, 0.25), 0 0 14px 3px rgba(255, 186, 8, 0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1785,6 +1866,17 @@ body.theme-dark .btn-dark:hover {
 
 body.theme-dark .btn-dark:active {
   box-shadow: 0 1px 0 #bbb7ad;
+}
+
+/* В тёмной теме кнопка светлая — блик делаем темнее, иначе не виден */
+body.theme-dark .btn-dark::after {
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 186, 8, 0.28) 45%,
+    rgba(184, 134, 11, 0.35) 55%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 body.theme-dark .btn-dark .arrow-icon {

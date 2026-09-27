@@ -690,20 +690,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderQuestionContext(q) {
     if (!qChipCategory || !qChipTopic || !qChipLevel) return;
 
-    const levelFull = q.current_difficulty_label || '';
-    // "B1 (Intermediate)" → чип показывает только код уровня, полное имя в title
-    const levelCode = levelFull.split(' ')[0] || '';
+    // "B1 (Intermediate)" → чип показывает только код уровня
+    const levelCode = (q.current_difficulty_label || '').split(' ')[0] || '';
 
-    const fill = (el, value, title) => {
+    const fill = (el, value) => {
       el.textContent = value || '';
       el.classList.toggle('is-empty', !value);
-      if (title) el.setAttribute('title', title);
-      else el.removeAttribute('title');
     };
 
     fill(qChipCategory, q.category || '');
     fill(qChipTopic, q.topic || '');
-    fill(qChipLevel, levelCode, levelFull);
+    fill(qChipLevel, levelCode);
 
     if (questionMeta) {
       questionMeta.classList.toggle(
@@ -758,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
       wrap.innerHTML = `
         <input type="text" class="text-answer-input" id="text-answer-input"
                autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
-               enterkeyhint="done" placeholder="Введите ответ..." aria-label="Введите ответ">
+               enterkeyhint="done" aria-label="Введите ответ">
         <button type="button" class="btn-primary text-answer-btn" id="text-answer-btn">Ответить</button>
       `;
       optionsContainer.appendChild(wrap);

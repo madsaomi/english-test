@@ -102,25 +102,51 @@ async def test_03_full_fixed_run():
     print(f"[OK] Test 3: Full fixed run completed. Level: {final_result.cefr_level}, Score: {final_result.score}, Accuracy: {final_result.accuracy_percentage}%.")
 
 
+async def _answer_all_remaining_correct(session_id, suite, preanswered_ids=()):
+    """Добивает сессию правильными ответами в порядке набора. Возвращает финальный результат.
+
+    H1: правильность отдельного ответа в ответе API не отдаётся, поэтому
+    корректность проверяется финальным `correct_count` (49 vs 50).
+    """
+    done = set(preanswered_ids)
+    final_result = None
+    for qm in suite.questions:
+        if qm.id in done:
+            continue
+        payload_kwargs = {"session_id": session_id, "question_id": qm.id, "time_spent_seconds": 2.0}
+        if qm.question_type == "text":
+            payload_kwargs["selected_text"] = (qm.correct_text or "").strip()
+        else:
+            payload_kwargs["selected_option"] = qm.correct_option
+        ans = await answer_question(AnswerSubmission(**payload_kwargs))
+        if ans.is_finished:
+            final_result = ans.result
+    return final_result
+
+
 async def test_04_text_case_sensitivity():
-    """Текстовые ответы чувствительны к регистру"""
+    """Текстовые ответы чувствительны к регистру (проверка по итоговому correct_count)."""
     suite = test_repository.get_test_suite("test_general_2026")
     text_q = next(q for q in suite.questions if q.question_type == "text")
-
-    # Сессия A: ответ с неверным регистром
-    start_res = await start_test(StartTestRequest(test_id="test_general_2026"))
-    session_a = start_res.session_id
     expected = (text_q.correct_text or "").strip()
     wrong_case = expected.upper() if expected != expected.upper() else expected.lower()
+
+    # Сессия A: первый ответ — text с неверным регистром, остальное правильно
+    start_res_a = await start_test(StartTestRequest(test_id="test_general_2026"))
+    session_a = start_res_a.session_id
     res_a = await answer_question(AnswerSubmission(
         session_id=session_a,
         question_id=text_q.id,
         selected_text=wrong_case,
         time_spent_seconds=2.0,
     ))
-    assert res_a.is_correct is False, "Другой регистр должен давать неверный ответ"
+    # H1: даже на уровне функции правильность не должна вытекать
+    assert "is_correct" not in res_a.model_dump()
+    final_a = await _answer_all_remaining_correct(session_a, suite, preanswered_ids=[text_q.id])
+    assert final_a is not None
+    assert final_a.correct_count == 49, f"Неверный регистр должен стоить 1 балла, получено {final_a.correct_count}"
 
-    # Сессия B: точное совпадение
+    # Сессия B: всё правильно, включая text
     start_res_b = await start_test(StartTestRequest(test_id="test_general_2026"))
     session_b = start_res_b.session_id
     res_b = await answer_question(AnswerSubmission(
@@ -129,8 +155,12 @@ async def test_04_text_case_sensitivity():
         selected_text=expected,
         time_spent_seconds=2.0,
     ))
-    assert res_b.is_correct is True, "Точное совпадение должно быть верным"
-    print(f"[OK] Test 4: text answers are case-sensitive ({text_q.correct_text!r}).")
+    assert "is_correct" not in res_b.model_dump()
+    final_b = await _answer_all_remaining_correct(session_b, suite, preanswered_ids=[text_q.id])
+    assert final_b is not None
+    assert final_b.correct_count == 50, f"Точное совпадение должно дать 50, получено {final_b.correct_count}"
+    print(f"[OK] Test 4: text answers are case-sensitive ({text_q.correct_text!r}), "
+          f"49 vs 50 verified without leaking is_correct.")
 
 
 async def main():

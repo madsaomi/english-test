@@ -51,6 +51,7 @@ exports/*.json
 
 # Persistent lead & session data
 data/leads.json
+data/leads.json.tmp
 data/sessions.json
 
 # OS specific

@@ -42,7 +42,7 @@ def run_e2e_test():
             data=payload
         ))
         ans_data = json.loads(r.read().decode('utf-8'))
-        print(f"   Q{question_count} answered. is_correct={ans_data['is_correct']}, next_diff={ans_data['current_difficulty_label']}")
+        print(f"   Q{question_count} answered. next_diff={ans_data['current_difficulty_label']}")
         if ans_data['is_finished']:
             final_result = ans_data['result']
             break
@@ -57,9 +57,8 @@ def run_e2e_test():
     contact_payload = json.dumps({
         'session_id': session_id,
         'name': 'Alexander Test',
-        'phone': '+7 900 123-45-67',
+        'phone': '+998 90 123-45-67',
         'telegram_username': 'alex_test',
-        'tg_user_id': 123456789
     }).encode('utf-8')
     r_contact = urllib.request.urlopen(urllib.request.Request(
         'http://127.0.0.1:8000/api/test/submit-contact',

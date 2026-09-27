@@ -101,7 +101,8 @@ def test_time_spent_out_of_range_rejected():
         "time_spent_seconds": 7.5,
     })
     assert res.status_code == 200, res.status_code
-    assert res.json()["is_correct"] in (True, False)
+    # H1 (audit): правильность ответа клиенту не отдаём — поле is_correct запрещено
+    assert "is_correct" not in res.json(), "is_correct не должен утекать клиенту"
 
     print("[OK] HTTP test: time_spent_seconds validated (0..3600)")
 
@@ -136,7 +137,7 @@ def _answer_payload(qmodel, step: int, text_value: str = None):
 
 
 def _run_full(client, wrong_case_at_first_text: bool = False):
-    """Проводит тест до конца. Возвращает (session_id, final_result, text_case_correct)."""
+    """Проводит тест до конца. Возвращает (session_id, final_result)."""
     start = client.post("/api/test/start", json={})
     assert start.status_code == 200
     data = start.json()
@@ -146,7 +147,6 @@ def _run_full(client, wrong_case_at_first_text: bool = False):
     current_q = data["first_question"]
     step = 0
     final = None
-    text_case_correct = None
     used_wrong_case = False
 
     while current_q and step < 60:
@@ -169,8 +169,8 @@ def _run_full(client, wrong_case_at_first_text: bool = False):
         ans = client.post("/api/test/answer", json=payload)
         assert ans.status_code == 200, ans.text
         body = ans.json()
-        if text_override is not None:
-            text_case_correct = body["is_correct"]
+        # H1: правильность ответа не должна быть доступна клиенту по ходу теста
+        assert "is_correct" not in body
         if body["is_finished"]:
             final = body["result"]
             break
@@ -178,12 +178,12 @@ def _run_full(client, wrong_case_at_first_text: bool = False):
         step += 1
 
     assert final is not None, "Тест должен завершиться"
-    return sid, final, text_case_correct
+    return sid, final
 
 
 def test_fixed_general_run_over_http():
     client = TestClient(app)
-    sid, final, _ = _run_full(client)
+    sid, final = _run_full(client)
     assert final["total_questions"] == 50
     assert final["accuracy_percentage"] == 100
     assert final["cefr_description"], "Описание CEFR должно присутствовать в результате"
@@ -197,9 +197,9 @@ def test_fixed_general_run_over_http():
 
 def test_text_answer_case_sensitive():
     client = TestClient(app)
-    _, final, text_case_correct = _run_full(client, wrong_case_at_first_text=True)
-    assert text_case_correct is False, "Ответ с другим регистром должен быть неверным"
-    # 49 из 50 верно (первый text-ответ намеренно с неверным регистром)
+    _, final = _run_full(client, wrong_case_at_first_text=True)
+    # 49 из 50 верно (первый text-ответ намеренно с неверным регистром);
+    # правильность отдельного ответа клиенту не отдаётся (H1), проверяем финал
     assert final["correct_count"] == 49, f"Ожидалось 49, получено {final['correct_count']}"
     assert final["accuracy_percentage"] == 98
     print("[OK] HTTP test: text answers are case-sensitive")
@@ -532,8 +532,30 @@ def test_timeout_answers_allowed():
     })
     assert ans_res.status_code == 200
     data = ans_res.json()
-    assert data["is_correct"] is False
+    assert "is_correct" not in data, "is_correct не должен утекать клиенту (H1)"
     assert data["next_question"] is not None
+
+    # Догоняем тест до конца всеми правильными ответами:
+    # таймаутный вопрос должен быть засчитан как неверный → итого 49/50
+    suite = test_repository.get_test_suite("test_general_2026")
+    current_q = data["next_question"]
+    final = None
+    while current_q:
+        qmodel = next(q for q in suite.questions if q.id == current_q["id"])
+        payload = {"session_id": sid, "question_id": current_q["id"], "time_spent_seconds": 3.0}
+        if qmodel.question_type == "text":
+            payload["selected_text"] = (qmodel.correct_text or "").strip()
+        else:
+            payload["selected_option"] = qmodel.correct_option
+        body = client.post("/api/test/answer", json=payload).json()
+        assert "is_correct" not in body
+        if body["is_finished"]:
+            final = body["result"]
+            break
+        current_q = body["next_question"]
+
+    assert final is not None
+    assert final["correct_count"] == 49, f"Таймаут должен быть неверным, получено {final['correct_count']}"
     print("[OK] HTTP test: timeout answers allowed and counted as incorrect")
 
 

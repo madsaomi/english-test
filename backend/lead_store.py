@@ -41,17 +41,24 @@ class LeadRecord:
         self.branch = branch or "Главный офис"
 
     def to_dict(self) -> dict:
-        return {
+        data = {
             "session_id": self.session_id,
             "student_name": self.student_name,
             "phone": self.phone,
             "telegram_username": self.telegram_username,
-            "tg_user_id": self.tg_user_id,
             "test_id": self.test_id,
             "received_at": self.received_at.isoformat(timespec="seconds"),
-            "result": self.result.model_dump() if hasattr(self.result, "model_dump") else dict(self.result),
             "branch": self.branch,
         }
+        result = self.result.model_dump() if hasattr(self.result, "model_dump") else dict(self.result)
+        # M2 (audit 2026-09-27): минимизация PII на диске.
+        # - review (полный поразборный разбор с correct_*/explanation) нигде не
+        #   используется, но раздувал файл и хранил правильные ответы;
+        # - tg_user_id кандидата после PLAN-032 не нужен бизнесу.
+        # В памяти данные остаются (LeadRecord), на диск не пишутся.
+        result.pop("review", None)
+        data["result"] = result
+        return data
 
 
 def _load_from_disk() -> Dict[str, LeadRecord]:
@@ -85,13 +92,22 @@ class LeadStore:
     def __init__(self):
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         self._leads: Dict[str, LeadRecord] = _load_from_disk()
+        # M2: одноразовая перезапись файла без чувствительных полей.
+        # Старые записи (с review и tg_user_id) вычищаются при первом же старте.
+        self._persist()
 
     def _persist(self) -> None:
         try:
-            LEADS_FILE.write_text(
-                json.dumps([r.to_dict() for r in self._leads.values()], ensure_ascii=False, indent=2),
-                encoding="utf-8"
+            payload = json.dumps(
+                [r.to_dict() for r in self._leads.values()],
+                ensure_ascii=False,
+                indent=2,
             )
+            # Атомарная запись (M2): пишем в temp-файл и переименовываем.
+            # Прямой write_text на большой файл мог порвать данные при краше (BUG_004).
+            tmp = LEADS_FILE.with_name(LEADS_FILE.name + ".tmp")
+            tmp.write_text(payload, encoding="utf-8")
+            tmp.replace(LEADS_FILE)
         except Exception as e:
             logger.error(f"Не удалось сохранить лиды: {e}")
 

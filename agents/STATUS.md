@@ -1,9 +1,10 @@
 # 📊 Текущий статус проекта (STATUS.md)
 
-**Последнее обновление:** 2026-09-26 (UTC+5)  
-**Ответственный агент:** opencode (space-bunny-free)  
-**Текущая фаза:** PLAN-018 (Закрытие техдолга: OG-превью, метрики, time_spent, мёртвый CSS) — COMPLETED, ждёт коммита.  
-Закрыто ранее: PLAN-017 (rate limit + CORS + анти-спуфинг), PLAN-016 (UI), PLAN-015 (PII + персистентность).
+**Последнее обновление:** 2026-09-27 (UTC+5)  
+**Ответственный агент:** opencode (big-pickle)  
+**Текущая фаза:** PLAN-033 (H1-утечка `is_correct` + M2-минимизация PII в `leads.json`) — COMPLETED, запушен.
+Закрыто ранее: PLAN-032 (кандидату в Telegram ничего), PLAN-031 (линейки `───` убраны).
+Полный аудит безопасности: `agents/audits/audit_2026-09-27_full_security.md` (пункты M1/M3/M4/M5/L* — в бэклоге).
 
 ---
 
@@ -43,6 +44,12 @@
 | 3 | Лимит по IP, а не по сессии — при росте нагрузки может понадобиться per-session лимитинг | ⚪ только при масштабировании |
 
 **Закрыто в PLAN-018:** `active_sessions` в health (флаг `SHOW_INTERNAL_METRICS`), лимит `time_spent_seconds` (`Field(ge=0, le=3600)`), `og:url` + `twitter:card=summary_large_image` + абсолютизация OG-мет через `location.origin`, мёртвый CSS `.option-key`. Технический долг из аудита **закрыт полностью**.
+
+## 🎯 Что сделано в PLAN-033 (безопасность, аудит 2026-09-27):
+- [x] **H1:** `is_correct` убран из `AnswerResponse` и из ответов `/api/test/answer` — клиентской скрипт больше не может вытянуть ключ ответов перебором вариантов (фронт флаг не использовал).
+- [x] **M2:** `to_dict()` лидов больше не пишет на диск `result.review` (полный разбор с `correct_*`/`explanation`) и `tg_user_id`; атомарная запись через tmp+replace (переживает краш); purge старых данных при старте — файл 3.44 МБ → 220 КБ (106 записей).
+- [x] Тесты переведены с чтения `is_correct` на финальный `correct_count` (49 vs 50); добавлены защитные ассерты «is_correct отсутствует»; `test_e2e` починен (телефон 998, без невалидного `tg_user_id`).
+- [x] `check_integrity` 100%, `test_api_http` 19/19, `test_multi_suites` 4/4, `test_review_feature`, `test_simulation`, `test_e2e` — все PASSED.
 
 ## 📌 Требуется вручную в Railway
 ```ini

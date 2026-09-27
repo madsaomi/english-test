@@ -257,7 +257,6 @@ async def start_test(payload: Optional[StartTestRequest] = None):
 
 class AnswerResponse(BaseModel):
     is_finished: bool
-    is_correct: bool
     current_difficulty_label: str
     next_question: Optional[ClientQuestion] = None
     result: Optional[TestResult] = None
@@ -292,7 +291,9 @@ async def answer_question(payload: AnswerSubmission):
         if payload.selected_option is None or payload.selected_option < 0:
             raise HTTPException(status_code=400, detail="Не выбран вариант ответа")
 
-    is_correct = cat_engine.submit_answer(
+    # H1 (audit 2026-09-27): правильность ответа клиенту НЕ отдаём — фронтенд
+    # её не использует, а публикация позволяет скриптом вытянуть весь ключ ответов.
+    cat_engine.submit_answer(
         session=session,
         question_id=payload.question_id,
         selected_option=payload.selected_option,
@@ -306,7 +307,6 @@ async def answer_question(payload: AnswerSubmission):
         result = cat_engine.finalize_test(session)
         return AnswerResponse(
             is_finished=True,
-            is_correct=is_correct,
             current_difficulty_label=result.level_title,
             next_question=None,
             result=result
@@ -317,7 +317,6 @@ async def answer_question(payload: AnswerSubmission):
         result = cat_engine.finalize_test(session)
         return AnswerResponse(
             is_finished=True,
-            is_correct=is_correct,
             current_difficulty_label=result.level_title,
             next_question=None,
             result=result
@@ -326,7 +325,6 @@ async def answer_question(payload: AnswerSubmission):
     client_q = cat_engine.to_client_question(session, next_q)
     return AnswerResponse(
         is_finished=False,
-        is_correct=is_correct,
         current_difficulty_label=client_q.current_difficulty_label,
         next_question=client_q,
         result=None

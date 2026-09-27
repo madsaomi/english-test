@@ -146,10 +146,11 @@ def _format_metrics_block(result: TestResult) -> list:
 
 
 def _format_header(subtitle: str) -> list:
+    """Шапка карточки. Блок разделяется пустой строкой, а не линейкой."""
     return [
         "🏛 <b>Stanford Language Center</b>",
         f"<i>{_esc(subtitle)}</i>",
-        "───",
+        "",
     ]
 
 
@@ -172,11 +173,11 @@ def format_unified_lead_card(name: str, phone: Optional[str], username: Optional
         f"📱 <code>{_esc(phone) if phone else '—'}</code>",
         f"💬 {_format_tg_link(username)}",
         f"📅 {_esc(received_at)}",
-        "───",
+        "",
         f"🏆 <b>{_esc(level_str)}</b>",
     ]
     lines += _format_metrics_block(result)
-    lines.append("───")
+    lines.append("")
     lines.append("📚 <b>Навыки</b>")
     lines += _format_skills_block(result.skills)
     lines.append("")
@@ -194,11 +195,11 @@ def format_result_card(name: str, phone: Optional[str], username: Optional[str],
     lines += [
         f"👤 <b>{_esc(name)}</b>",
         f"🏢 {_esc(branch) if branch else 'Главный офис'}",
-        "───",
+        "",
         f"🏆 <b>{_esc(level_str)}</b>",
     ]
     lines += _format_metrics_block(result)
-    lines.append("───")
+    lines.append("")
     lines.append("📚 <b>Навыки</b>")
     lines += _format_skills_block(result.skills)
     lines.append("")

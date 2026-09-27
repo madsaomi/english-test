@@ -461,6 +461,7 @@ def test_lead_card_format():
     assert "Пропущено по таймеру" not in unified
     # Тяжёлые разделители и двоеточия убраны
     assert "━━━" not in unified
+    assert "───" not in unified, "линейки-разделители убраны, блоки делит воздух"
     assert "Кандидат:" not in unified
     assert "Принято:" not in unified
     assert "2 мин" not in unified and "сек" not in unified
@@ -481,6 +482,7 @@ def test_lead_card_format():
     assert "Университет" in detail
     assert "📱" not in detail, "кандидату не нужны контакты администратора"
     assert "━━━" not in detail
+    assert "───" not in detail
 
     # HTML-экранирование пользовательских данных (PLAN-030)
     tricky = format_unified_lead_card(

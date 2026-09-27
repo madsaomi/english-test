@@ -348,6 +348,70 @@ body.theme-dark .theme-icon-moon {
   transform: translateY(-1px);
 }
 
+/* Акцентная кнопка (welcome): фирменный жёлтый = единственное яркое действие.
+   Чёрный на жёлтом даёт контраст ~10:1 против ~4.5:1 у белого на чёрном. */
+.btn-accent {
+  background: var(--yellow);
+  color: var(--black);
+  border: 2px solid var(--black);
+  box-shadow: 0 5px 0 #000, 0 16px 30px -18px rgba(255, 186, 8, 0.75);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.btn-accent .arrow-icon {
+  color: var(--black);
+  transition: transform var(--transition-normal);
+}
+
+.btn-accent:hover {
+  background: var(--yellow-deep);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 #000, 0 20px 34px -18px rgba(255, 186, 8, 0.8);
+}
+
+.btn-accent:active {
+  transform: translateY(2px) scale(0.99);
+  box-shadow: 0 1px 0 #000;
+}
+
+/* Светлый блик по жёлтой кнопке */
+.btn-accent::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  left: -70%;
+  width: 45%;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-40%) rotate(8deg);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.btn-accent:hover::after {
+  transform: translateX(320%) rotate(8deg);
+}
+
+body.theme-dark .btn-accent {
+  background: var(--yellow);
+  color: var(--black);
+  border-color: var(--yellow-deep);
+  box-shadow: 0 5px 0 #b8860b, 0 16px 30px -18px rgba(255, 186, 8, 0.45);
+}
+
+body.theme-dark .btn-accent:hover {
+  background: #ffc429;
+  box-shadow: 0 7px 0 #b8860b, 0 20px 34px -18px rgba(255, 186, 8, 0.5);
+}
+
 .btn-large {
   font-size: 16.5px;
   padding: 18px 30px;
@@ -595,18 +659,25 @@ body.theme-dark .hero-meta {
   animation: heroFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
 }
 
-/* Мягкое жёлтое свечение вокруг CTA — «тепло» вместо плоского фона */
+/* Мягкое жёлтое свечение вокруг CTA — «тепло» вместо плоского фона.
+   Смещено вниз, чтобы жёлтая кнопка не сливалась со свечением. */
 .action-wrap::before {
   content: "";
   position: absolute;
-  top: 50%;
+  top: 58%;
   left: 50%;
-  width: min(360px, 92%);
-  height: 200px;
+  width: min(420px, 96%);
+  height: 190px;
   transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse at center, rgba(255, 186, 8, 0.28), transparent 68%);
+  background: radial-gradient(ellipse at center, rgba(255, 186, 8, 0.22), transparent 70%);
   pointer-events: none;
   z-index: -1;
+}
+
+/* Спиннер в жёлтой кнопке должен быть тёмным, а не белым */
+.btn-accent .btn-spinner {
+  border-color: rgba(16, 16, 16, 0.2);
+  border-top-color: var(--black);
 }
 
 .action-note {

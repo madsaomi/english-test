@@ -36,13 +36,15 @@ class AnswerSubmission(BaseModel):
     is_timeout: bool = False
 
 class UserContactSubmission(BaseModel):
-    session_id: str
-    name: str
-    phone: Optional[str] = None
-    telegram_username: Optional[str] = None
+    session_id: str = Field(max_length=64)
+    # M5 (audit): лимиты длин — мегастроки ломали Telegram-сообщение и мусорили JSON/логи.
+    # Пустые значения обрабатывает эндпоинт (400), поэтому min_length не нужен.
+    name: str = Field(max_length=100)
+    phone: Optional[str] = Field(default=None, max_length=30)
+    telegram_username: Optional[str] = Field(default=None, max_length=64)
     tg_user_id: Optional[int] = None
-    tg_init_data: Optional[str] = None
-    branch: Optional[str] = "Главный офис"
+    tg_init_data: Optional[str] = Field(default=None, max_length=4096)
+    branch: Optional[str] = Field(default="Главный офис", max_length=60)
 
 class SkillBreakdown(BaseModel):
     category: str

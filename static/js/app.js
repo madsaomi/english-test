@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let secondsElapsed = 0;
   let isAnswering = false;
   let toastTimer = null;
+  let activeScreen = null; /* B1: для блока горячих клавиш — экран, где можно копировать */
 
   // Telegram WebApp detection
   const tg = window.Telegram?.WebApp;
@@ -520,6 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Switch Screen
   function showScreen(screen) {
+    activeScreen = screen;
     [screenWelcome, screenQuestion, screenResult].forEach(s => {
       s.classList.remove('active');
     });

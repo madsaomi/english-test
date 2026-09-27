@@ -374,6 +374,61 @@ def test_contact_requires_name_and_phone():
     print("[OK] HTTP test: contact requires name and phone (Uzbekistan format)")
 
 
+def test_contact_length_limits():
+    """M5 (audit): мегастроки в контактах должны отбиваться как 422."""
+    client = TestClient(app)
+    sid = _complete_fixed(client)
+
+    res = client.post("/api/test/submit-contact", json={
+        "session_id": sid,
+        "name": "И" * 101,
+        "phone": "+998 90 123-45-67",
+    })
+    assert res.status_code == 422, res.status_code
+
+    res2 = client.post("/api/test/submit-contact", json={
+        "session_id": sid,
+        "name": "Иван Петров",
+        "phone": "+998 90 123-45-67",
+        "branch": "Ф" * 61,
+    })
+    assert res2.status_code == 422, res2.status_code
+    print("[OK] HTTP test: contact length limits (M5)")
+
+
+def test_submit_contact_idempotent():
+    """M4/B2 (audit): повторный submit не должен дублировать уведомление админу."""
+    client = TestClient(app)
+    sid = _complete_fixed(client)
+
+    original_send = main_module.send_admin_lead_notification
+    calls = [0]
+
+    async def _fake_send(lead):
+        calls[0] += 1
+        return True
+
+    main_module.send_admin_lead_notification = _fake_send
+    try:
+        payload = {
+            "session_id": sid,
+            "name": "Иван Петров",
+            "phone": "+998 90 123-45-67",
+        }
+        resp1 = client.post("/api/test/submit-contact", json=payload)
+        assert resp1.status_code == 200
+        assert resp1.json()["telegram_sent"] is True
+
+        resp2 = client.post("/api/test/submit-contact", json=payload)
+        assert resp2.status_code == 200
+        assert resp2.json()["telegram_sent"] is True
+
+        assert calls[0] == 1, f"Уведомление ушло {calls[0]} раз, ожидалось ровно 1"
+    finally:
+        main_module.send_admin_lead_notification = original_send
+    print("[OK] HTTP test: submit-contact idempotent (1 admin notification per lead)")
+
+
 def test_contact_persist_and_export():
     client = TestClient(app)
     sid = _complete_fixed(client)
@@ -595,6 +650,8 @@ if __name__ == "__main__":
     test_leads_endpoint()
     test_start_unknown_test_falls_back()
     test_contact_requires_name_and_phone()
+    test_contact_length_limits()
+    test_submit_contact_idempotent()
     test_contact_persist_and_export()
     test_lead_card_format()
     test_init_data_validation()

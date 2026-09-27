@@ -417,8 +417,14 @@ async def submit_user_contact(payload: UserContactSubmission):
 
     # Результат уходит ТОЛЬКО сотруднику. Кандидату ничего не отправляем:
     # раскрытие уровня убирает смысл звонка (решение владельца, PLAN-032).
-    sent = await send_admin_lead_notification(lead)
-    session.result.telegram_sent = sent
+    # M4/B2 (audit): повторный submit не должен дублировать уведомление.
+    # telegram_sent=True => уже доставлено, отправку пропускаем. Если первая
+    # отправка упала (sent=False), флаг остаётся False и можно повторить.
+    if session.result.telegram_sent:
+        sent = True
+    else:
+        sent = await send_admin_lead_notification(lead)
+        session.result.telegram_sent = sent
 
     return {
         "status": "success",

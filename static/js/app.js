@@ -115,10 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const optionsContainer = document.getElementById('options-container');
   const questionCard = document.getElementById('question-card');
   const progressDots = document.getElementById('progress-dots');
-  const questionMeta = document.getElementById('question-meta');
-  const qChipCategory = document.getElementById('q-chip-category');
-  const qChipTopic = document.getElementById('q-chip-topic');
-  const qChipLevel = document.getElementById('q-chip-level');
 
   // Telegram Form Elements
   const tgSubmitForm = document.getElementById('tg-submit-form');
@@ -685,31 +681,6 @@ document.addEventListener('DOMContentLoaded', () => {
     progressDots.innerHTML = html;
   }
 
-  // Контекст вопроса (category / topic / difficulty) приходит из ClientQuestion.
-  // Ничего не вычисляется на клиенте — только показываем то, что отдал сервер.
-  function renderQuestionContext(q) {
-    if (!qChipCategory || !qChipTopic || !qChipLevel) return;
-
-    // "B1 (Intermediate)" → чип показывает только код уровня
-    const levelCode = (q.current_difficulty_label || '').split(' ')[0] || '';
-
-    const fill = (el, value) => {
-      el.textContent = value || '';
-      el.classList.toggle('is-empty', !value);
-    };
-
-    fill(qChipCategory, q.category || '');
-    fill(qChipTopic, q.topic || '');
-    fill(qChipLevel, levelCode);
-
-    if (questionMeta) {
-      questionMeta.classList.toggle(
-        'is-empty',
-        !(q.category || q.topic || levelCode)
-      );
-    }
-  }
-
   function renderQuestion(q) {
     currentQuestion = q;
     isAnswering = false;
@@ -737,8 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let text = q.text;
     text = text.replace(/_{2,}/g, '<span class="gap-blank">_____</span>');
     qText.innerHTML = text;
-
-    renderQuestionContext(q);
 
     // Render Options
     optionsContainer.innerHTML = '';

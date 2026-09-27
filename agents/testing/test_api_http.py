@@ -449,9 +449,16 @@ def test_lead_card_format():
         received_at="25.09.2026 21:30",
         branch="Главный офис",
     )
-    assert "STANFORD LANGUAGE CENTER" in unified
-    assert "🏢 <b>Филиал:</b> Главный офис" in unified
-    assert "👤 <b>Кандидат:</b> Иван Петров" in unified
+    assert "Stanford Language Center" in unified
+    # Дизайн карточки (PLAN-029): якорь, одна строка метрик, тонкие разделители
+    assert "🏢 <b>Филиал:</b>" not in unified
+    assert "👤 <b>Кандидат:</b>" not in unified
+    assert "Главный офис" in unified
+    assert "Иван Петров" in unified
+    assert "───" in unified
+    assert "━━━" not in unified, "тяжёлые разделители должны быть заменены тонкими"
+    assert "<b>Навыки</b>" in unified
+    assert "Пропущено по таймеру" not in unified, "при skipped_count=0 строка не нужна"
     # Графическая шкала удалена из карточек по фидбеку пользователя
     assert "Шкала" not in unified
     assert "\U0001F7E9" not in unified
@@ -465,8 +472,10 @@ def test_lead_card_format():
     )
     assert "Шкала" not in detail
     assert "\U0001F7E9" not in detail
-    assert "Итоговый уровень" in detail
-    print("[OK] HTTP test: lead card format with branch (no progress scale)")
+    assert "Stanford Language Center" in detail
+    assert "Университет" in detail
+    assert "━━━" not in detail
+    print("[OK] HTTP test: lead card format with branch (minimal, single message)")
 
 
 def test_init_data_validation():

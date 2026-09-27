@@ -450,16 +450,21 @@ def test_lead_card_format():
         branch="Главный офис",
     )
     assert "Stanford Language Center" in unified
-    # Дизайн карточки (PLAN-029): якорь, одна строка метрик, тонкие разделители
-    assert "🏢 <b>Филиал:</b>" not in unified
-    assert "👤 <b>Кандидат:</b>" not in unified
-    assert "Главный офис" in unified
-    assert "Иван Петров" in unified
-    assert "───" in unified
-    assert "━━━" not in unified, "тяжёлые разделители должны быть заменены тонкими"
-    assert "<b>Навыки</b>" in unified
-    assert "Пропущено по таймеру" not in unified, "при skipped_count=0 строка не нужна"
-    # Графическая шкала удалена из карточек по фидбеку пользователя
+    # Дизайн карточки: исходная структура, убран шум (PLAN-030)
+    assert "📊 100/100" in unified
+    assert "🎯 50 из 50 · 100%" in unified
+    assert "⏱" in unified
+    assert "📚 <b>Навыки</b>" in unified
+    assert "• Grammar 100%" in unified
+    assert "⚠️ <b>Темы для повторения</b>" in unified
+    # Строка про пропуски только при skipped_count > 0 (в полном прогоне 0)
+    assert "Пропущено по таймеру" not in unified
+    # Тяжёлые разделители и двоеточия убраны
+    assert "━━━" not in unified
+    assert "Кандидат:" not in unified
+    assert "Принято:" not in unified
+    assert "2 мин" not in unified and "сек" not in unified
+    # Графической шкалы нет
     assert "Шкала" not in unified
     assert "\U0001F7E9" not in unified
 
@@ -474,8 +479,22 @@ def test_lead_card_format():
     assert "\U0001F7E9" not in detail
     assert "Stanford Language Center" in detail
     assert "Университет" in detail
+    assert "📱" not in detail, "кандидату не нужны контакты администратора"
     assert "━━━" not in detail
-    print("[OK] HTTP test: lead card format with branch (minimal, single message)")
+
+    # HTML-экранирование пользовательских данных (PLAN-030)
+    tricky = format_unified_lead_card(
+        name="<b>Иван</b> & Петров",
+        phone="+998 <90>",
+        username="<a>@x</a>",
+        result=result_data,
+        received_at="27.09.2026",
+        branch="Филиал & Co",
+    )
+    assert "<b>Иван</b>" not in tricky, "имя должно быть экранировано"
+    assert "&lt;b&gt;Иван" in tricky
+    assert "Филиал &amp; Co" in tricky
+    print("[OK] HTTP test: lead card format (minimal, escaped, single message)")
 
 
 def test_init_data_validation():

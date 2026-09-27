@@ -1,3 +1,4 @@
+import html
 import logging
 from typing import Optional
 from aiogram import Bot, Dispatcher, types
@@ -97,100 +98,112 @@ def format_compact_lead_card(name: str, level_code: str, level_title: str,
     )
 
 def _format_mmss(total_seconds: int) -> str:
-    """Время в компактном виде MM:SS (2:30 вместо '2 мин 30 сек')."""
+    """Время в компактном виде: 02:30 вместо '2 мин 30 сек'."""
     seconds = max(0, int(total_seconds or 0))
     return f"{seconds // 60:02d}:{seconds % 60:02d}"
 
 
-def _format_skills_line(skills: list) -> str:
-    """Навыки в одну строку: Grammar 100% · Vocabulary 88% · Usage 75%."""
-    if not skills:
-        return ""
-    parts = [f"<code>{s.category} {s.score_percentage}%</code>" for s in skills]
-    return " · ".join(parts)
+def _esc(value) -> str:
+    """Экранирование HTML.
+
+    Обязательно: Telegram отклоняет сообщение при неэкранированном виде,
+    а в имя/филиал/тему попадают данные пользователя.
+    """
+    return html.escape(str(value if value is not None else ""), quote=False)
+
+
+# Максимум тем в блоке «Темы для повторения» — карточка не должна растягиваться
+WEAK_TOPICS_LIMIT = 5
+
+
+def _format_weak_topics(topics: list) -> str:
+    if not topics:
+        return "—"
+    shown = list(topics)[:WEAK_TOPICS_LIMIT]
+    rest = len(topics) - len(shown)
+    text = ", ".join(_esc(t) for t in shown)
+    if rest > 0:
+        text += f" <i>и ещё {rest}</i>"
+    return text
+
+
+def _format_skills_block(skills: list) -> list:
+    """Блок «Навыки». Уровень по навыку (A2/B1) убран: он дублировал итоговый."""
+    return [f"• {_esc(skill.category)} {skill.score_percentage}%" for skill in skills]
+
+
+def _format_metrics_block(result: TestResult) -> list:
+    """Метрики. Строка про пропуски печатается только когда пропуски есть."""
+    lines = [
+        f"📊 {result.score}/100",
+        f"🎯 {result.correct_count} из {result.total_questions} · {result.accuracy_percentage}%",
+    ]
+    skipped = getattr(result, "skipped_count", 0) or 0
+    if skipped > 0:
+        lines.append(f"⏳ Пропущено по таймеру: {skipped}")
+    lines.append(f"⏱ {_format_mmss(result.total_time_seconds)}")
+    return lines
+
+
+def _format_header(subtitle: str) -> list:
+    return [
+        "🏛 <b>Stanford Language Center</b>",
+        f"<i>{_esc(subtitle)}</i>",
+        "───",
+    ]
+
+
+def _format_tg_link(username: Optional[str]) -> str:
+    if not username:
+        return "—"
+    return "@" + _esc(username.lstrip("@"))
 
 
 def format_unified_lead_card(name: str, phone: Optional[str], username: Optional[str],
                              result: TestResult, received_at: str,
                              branch: Optional[str] = "Главный офис") -> str:
-    """Единая карточка заявки Stanford Language Center (одно сообщение).
-
-    Компромисс между «якорем» (уровень наверху) и «реестром» (таблица):
-    уровень и метрики — одной строкой-якорем, контакты — компактным блоком,
-    навыки — одной строкой. Только один эмодзи и тонкие разделители.
-    """
-    branch_str = branch if branch else "Главный офис"
-    phone_str = phone if phone else "—"
-    user_link = f"@{username.lstrip('@')}" if username else "—"
-
+    """Карточка заявки для сотрудника: одно сообщение, исходная структура, минимум шума."""
     level_str = format_clean_level(result.cefr_level, result.level_title)
-    time_str = _format_mmss(result.total_time_seconds)
-    skills_line = _format_skills_line(result.skills)
 
-    metrics = f"<code>{result.correct_count}</code>/<code>{result.total_questions}</code>"
-    metrics += f" · <code>{result.accuracy_percentage}%</code>"
-    metrics += f" · <code>{time_str}</code>"
-
-    lines = [
-        "🏛 <b>Stanford Language Center</b>",
-        f"<i>General English Test 2026</i>",
-        "",
-        f"<b>{level_str}</b>",
-        metrics,
-        "",
+    lines = _format_header("Результат тестирования английского")
+    lines += [
+        f"👤 <b>{_esc(name)}</b>",
+        f"🏢 {_esc(branch) if branch else 'Главный офис'}",
+        f"📱 <code>{_esc(phone) if phone else '—'}</code>",
+        f"💬 {_format_tg_link(username)}",
+        f"📅 {_esc(received_at)}",
         "───",
-        f"<b>{name}</b>",
-        branch_str,
-        f"<code>{phone_str}</code> · {user_link}",
-        received_at,
-        "───",
+        f"🏆 <b>{_esc(level_str)}</b>",
     ]
-
-    if skills_line:
-        lines.append(f"<b>Навыки</b>  {skills_line}")
-
-    skipped = getattr(result, "skipped_count", 0) or 0
-    if skipped > 0:
-        lines.append(f"<b>Пропущено по таймеру</b>  <code>{skipped}</code>")
-
-    if result.weak_topics:
-        lines.append(f"<b>Повторить</b>  " + ", ".join(result.weak_topics))
-    else:
-        lines.append("<b>Повторить</b>  —")
-
+    lines += _format_metrics_block(result)
+    lines.append("───")
+    lines.append("📚 <b>Навыки</b>")
+    lines += _format_skills_block(result.skills)
+    lines.append("")
+    lines.append("⚠️ <b>Темы для повторения</b>")
+    lines.append(_format_weak_topics(result.weak_topics))
     return "\n".join(lines)
+
 
 def format_result_card(name: str, phone: Optional[str], username: Optional[str], result: TestResult,
                        branch: Optional[str] = "Главный офис") -> str:
-    """Карточка результата для кандидата — тот же визуальный язык, без контактов админа."""
-    branch_str = branch if branch else "Главный офис"
+    """Карточка результата для кандидата: тот же язык, без блока контактов администратора."""
     level_str = format_clean_level(result.cefr_level, result.level_title)
-    time_str = _format_mmss(result.total_time_seconds)
-    skills_line = _format_skills_line(result.skills)
 
-    metrics = f"<code>{result.correct_count}</code>/<code>{result.total_questions}</code>"
-    metrics += f" · <code>{result.accuracy_percentage}%</code>"
-    metrics += f" · <code>{time_str}</code>"
-
-    lines = [
-        "🏛 <b>Stanford Language Center</b>",
-        f"<i>Тест уровня английского</i>",
-        "",
-        f"<b>{level_str}</b>",
-        metrics,
-        "",
+    lines = _format_header("Тест уровня английского")
+    lines += [
+        f"👤 <b>{_esc(name)}</b>",
+        f"🏢 {_esc(branch) if branch else 'Главный офис'}",
         "───",
-        branch_str,
+        f"🏆 <b>{_esc(level_str)}</b>",
     ]
-
-    if skills_line:
-        lines.append(f"<b>Навыки</b>  {skills_line}")
-
-    if result.weak_topics:
-        lines.append(f"<b>Повторить</b>  " + ", ".join(result.weak_topics))
-    else:
-        lines.append("<b>Повторить</b>  —")
-
+    lines += _format_metrics_block(result)
+    lines.append("───")
+    lines.append("📚 <b>Навыки</b>")
+    lines += _format_skills_block(result.skills)
+    lines.append("")
+    lines.append("⚠️ <b>Темы для повторения</b>")
+    lines.append(_format_weak_topics(result.weak_topics))
     return "\n".join(lines)
 
 def get_lead_action_keyboard(phone: Optional[str], username: Optional[str]) -> Optional[InlineKeyboardMarkup]:

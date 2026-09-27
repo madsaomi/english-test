@@ -452,10 +452,21 @@ body.theme-dark .btn-accent:hover {
 .btn:focus-visible,
 .option-card:focus-visible,
 .test-card:focus-visible,
+.branch-btn:focus-visible,
+.theme-toggle:focus-visible,
 a:focus-visible,
 input:focus-visible {
   outline: 2px solid var(--black);
   outline-offset: 3px;
+}
+
+/* Двойное кольцо для компактных кнопок: жёлтое + чёрное читается
+   и на светлой, и на тёмной теме */
+.branch-btn:focus-visible,
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(16, 16, 16, 0.75);
 }
 
 .btn.is-loading,
@@ -1698,11 +1709,11 @@ body.theme-dark .form-privacy-note {
   font-weight: 600;
   color: var(--black-soft);
   cursor: pointer;
-  outline: none;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
 }
 
 .branch-btn:hover {
@@ -1731,6 +1742,26 @@ body.theme-dark .form-privacy-note {
 
 .branch-btn.is-active .branch-icon {
   transform: scale(1.12);
+}
+
+/* Явная отметка «выбрано» — не только заливка.
+   Своя анимация: checkPop сдвигает translateY(-50%) и здесь не подходит. */
+.branch-btn.is-active::after {
+  content: "✓";
+  position: absolute;
+  top: 6px;
+  right: 9px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--yellow);
+  animation: branchCheckPop 0.3s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+@keyframes branchCheckPop {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .branch-btn:active {
@@ -1804,6 +1835,33 @@ body.theme-dark .form-privacy-note {
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  animation: fieldErrorIn 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.field-error::before {
+  content: "!";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+@keyframes fieldErrorIn {
+  0% { opacity: 0; transform: translateX(-4px); }
+  40% { opacity: 1; transform: translateX(2px); }
+  70% { transform: translateX(-1px); }
+  100% { opacity: 1; transform: translateX(0); }
 }
 
 .tg-form .btn {
@@ -2015,6 +2073,11 @@ body.theme-dark .form-privacy-note {
 
 #btn-restart-test svg {
   flex-shrink: 0;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#btn-restart-test:hover svg {
+  transform: rotate(-180deg);
 }
 
 /* --------------------------------------------------------------------------

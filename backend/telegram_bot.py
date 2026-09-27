@@ -186,27 +186,6 @@ def format_unified_lead_card(name: str, phone: Optional[str], username: Optional
     return "\n".join(lines)
 
 
-def format_result_card(name: str, phone: Optional[str], username: Optional[str], result: TestResult,
-                       branch: Optional[str] = "Главный офис") -> str:
-    """Карточка результата для кандидата: тот же язык, без блока контактов администратора."""
-    level_str = format_clean_level(result.cefr_level, result.level_title)
-
-    lines = _format_header("Тест уровня английского")
-    lines += [
-        f"👤 <b>{_esc(name)}</b>",
-        f"🏢 {_esc(branch) if branch else 'Главный офис'}",
-        "",
-        f"🏆 <b>{_esc(level_str)}</b>",
-    ]
-    lines += _format_metrics_block(result)
-    lines.append("")
-    lines.append("📚 <b>Навыки</b>")
-    lines += _format_skills_block(result.skills)
-    lines.append("")
-    lines.append("⚠️ <b>Темы для повторения</b>")
-    lines.append(_format_weak_topics(result.weak_topics))
-    return "\n".join(lines)
-
 def get_lead_action_keyboard(phone: Optional[str], username: Optional[str]) -> Optional[InlineKeyboardMarkup]:
     """Генерирует инлайн-кнопки быстрого действия (написать в Telegram).
     Примечание: Telegram Bot API допускает в url только HTTP/HTTPS-ссылки."""
@@ -256,52 +235,3 @@ async def send_admin_lead_notification(lead) -> bool:
     except Exception as e:
         logger.error(f"Ошибка отправки единой карточки сотруднику: {e}")
         return False
-
-
-async def send_student_full_result(name: str, tg_user_id: Optional[int], result: TestResult,
-                                  branch: Optional[str] = "Главный офис") -> bool:
-    """Отправляет полную карточку результатов самому кандидату (если известен chat_id)."""
-    if not IS_BOT_ENABLED or not bot or not tg_user_id:
-        return False
-    try:
-        user_msg = (
-            f"🎉 <b>Поздравляем с прохождением теста, {name}!</b>\n\n"
-            f"{format_result_card(name=name, phone=None, username=None, result=result, branch=branch)}\n\n"
-            "💡 <b>Рекомендации преподавателя:</b>\n" +
-            "\n".join([f"✨ {r}" for r in result.recommendations])
-        )
-        await bot.send_message(chat_id=tg_user_id, text=user_msg, parse_mode=ParseMode.HTML)
-        logger.info(f"Отчет успешно отправлен ученику {tg_user_id}")
-        return True
-    except Exception as e:
-        logger.error(f"Ошибка отправки ученику {tg_user_id}: {e}")
-        return False
-
-
-async def send_result_notifications(
-    name: str,
-    phone: Optional[str],
-    username: Optional[str],
-    tg_user_id: Optional[int],
-    result: TestResult
-) -> bool:
-    """Совместимая обёртка: отправляет уведомление сотруднику и кандидату."""
-    if not IS_BOT_ENABLED or not bot:
-        logger.info(f"[DEMO MODE] Telegram уведомление не отправлено (бот не настроен в .env): {name} -> {result.cefr_level}")
-        return False
-
-    sent_admin = False
-    if ADMIN_CHAT_ID:
-        try:
-            card = format_result_card(name, phone, username, result)
-            await bot.send_message(
-                chat_id=ADMIN_CHAT_ID,
-                text=f"🔔 <b>НОВАЯ ЗАЯВКА С ТЕСТА!</b>\n\n{card}",
-                parse_mode=ParseMode.HTML
-            )
-            sent_admin = True
-        except Exception as e:
-            logger.error(f"Ошибка отправки администратору: {e}")
-
-    sent_student = await send_student_full_result(name, tg_user_id, result)
-    return sent_admin or sent_student

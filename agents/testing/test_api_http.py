@@ -32,7 +32,7 @@ from fastapi.testclient import TestClient
 from backend.main import app, verify_telegram_init_data
 from backend.test_loader import test_repository
 from backend.lead_store import lead_store
-from backend.telegram_bot import format_compact_lead_card, format_unified_lead_card, format_result_card
+from backend.telegram_bot import format_compact_lead_card, format_unified_lead_card
 from backend.models import TestResult
 
 
@@ -469,20 +469,12 @@ def test_lead_card_format():
     assert "Шкала" not in unified
     assert "\U0001F7E9" not in unified
 
-    detail = format_result_card(
-        name="Иван Петров",
-        phone="+998 (90) 123-45-67",
-        username="ivan_petrov",
-        result=result_data,
-        branch="Университет",
-    )
-    assert "Шкала" not in detail
-    assert "\U0001F7E9" not in detail
-    assert "Stanford Language Center" in detail
-    assert "Университет" in detail
-    assert "📱" not in detail, "кандидату не нужны контакты администратора"
-    assert "━━━" not in detail
-    assert "───" not in detail
+    # Кандидату результат не отправляется (PLAN-032) — карточки кандидата больше нет
+    import backend.telegram_bot as tg_module
+    assert not hasattr(tg_module, "send_student_full_result"), \
+        "отправка результата кандидату должна быть удалена"
+    assert not hasattr(tg_module, "format_result_card"), \
+        "карточка результата кандидата больше не используется"
 
     # HTML-экранирование пользовательских данных (PLAN-030)
     tricky = format_unified_lead_card(

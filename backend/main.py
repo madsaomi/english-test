@@ -43,7 +43,7 @@ from .models import (
 )
 from .cat_engine import cat_engine
 from .test_loader import test_repository, DEFAULT_TEST_ID
-from .telegram_bot import bot, dp, send_admin_lead_notification, send_student_full_result
+from .telegram_bot import bot, dp, send_admin_lead_notification
 from .lead_store import lead_store, LeadRecord
 
 logging.basicConfig(
@@ -417,11 +417,9 @@ async def submit_user_contact(payload: UserContactSubmission):
     )
     lead_store.add_lead(lead)
 
-    sent_admin = await send_admin_lead_notification(lead)
-    sent_student = await send_student_full_result(
-        name=lead.student_name, tg_user_id=lead.tg_user_id, result=lead.result, branch=lead.branch
-    )
-    sent = sent_admin or sent_student
+    # Результат уходит ТОЛЬКО сотруднику. Кандидату ничего не отправляем:
+    # раскрытие уровня убирает смысл звонка (решение владельца, PLAN-032).
+    sent = await send_admin_lead_notification(lead)
     session.result.telegram_sent = sent
 
     return {

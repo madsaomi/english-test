@@ -71,6 +71,26 @@ a {
   font: inherit;
 }
 
+/* --------------------------------------------------------------------------
+   Paper grain — придаёт «печатный» материал вместо плоского пластика.
+   SVG feTurbulence прямо в CSS (без файлов и зависимостей), слой под контентом.
+   -------------------------------------------------------------------------- */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+}
+
+body.theme-dark::before {
+  opacity: 0.03;
+}
+
 button {
   cursor: pointer;
   border: 0;
@@ -531,6 +551,8 @@ input:focus-visible {
   flex-direction: column;
   min-height: calc(100vh - var(--header-h));
   width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .main-content {
@@ -1023,18 +1045,17 @@ body.theme-dark .q-number {
 .timer-ring-track {
   fill: none;
   stroke: var(--line-strong);
-  stroke-width: 4;
-  opacity: 0.55;
+  stroke-width: 3.4;
+  opacity: 0.6;
 }
 
 .timer-ring-fill {
   fill: none;
   stroke: var(--yellow);
-  stroke-width: 4;
+  stroke-width: 3.4;
   stroke-linecap: round;
   stroke-dasharray: 119.38;
   stroke-dashoffset: 0;
-  filter: drop-shadow(0 0 4px rgba(255, 186, 8, 0.5));
   transition: stroke-dashoffset 0.25s linear, stroke 0.3s ease;
 }
 
@@ -1051,7 +1072,6 @@ body.theme-dark .q-number {
 
 .timer-ring.timer-warning .timer-ring-fill {
   stroke: #d9381e;
-  filter: drop-shadow(0 0 6px rgba(217, 56, 30, 0.55));
 }
 
 .timer-ring.timer-warning .timer-ring-value {
@@ -1072,11 +1092,11 @@ body.theme-dark .q-number {
 }
 
 .progress-bar-container {
-  height: 8px;
+  height: 6px;
   background: var(--line);
   border-radius: var(--radius-pill);
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   max-width: var(--content-max);
   margin-left: auto;
   margin-right: auto;
@@ -1092,7 +1112,6 @@ body.theme-dark .q-number {
   position: relative;
   overflow: hidden;
   min-width: 8%;
-  box-shadow: 0 0 10px -2px rgba(255, 186, 8, 0.7);
 }
 
 .progress-bar-fill::after {
@@ -1110,12 +1129,12 @@ body.theme-dark .q-number {
   position: absolute;
   right: 0;
   top: 50%;
-  width: 12px;
-  height: 12px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   transform: translate(50%, -50%);
   background: var(--yellow-deep);
-  box-shadow: 0 0 0 3px rgba(255, 186, 8, 0.35), 0 0 12px 2px rgba(255, 186, 8, 0.6);
+  box-shadow: 0 0 0 2px rgba(255, 186, 8, 0.28);
 }
 
 @keyframes progressShimmer {
@@ -1135,7 +1154,7 @@ body.theme-dark .q-number {
   background: var(--cream-card);
   border: 1.5px solid var(--line);
   border-radius: calc(var(--radius-lg) + 2px);
-  padding: clamp(24px, 4vw, 36px);
+  padding: clamp(30px, 4.5vw, 44px);
   box-shadow: var(--shadow-card);
   max-width: var(--content-max);
   margin: 0 auto;
@@ -2087,7 +2106,7 @@ body.theme-dark .action-wrap::before {
 
 body.theme-dark .progress-bar-fill::before {
   background: var(--yellow);
-  box-shadow: 0 0 0 3px rgba(255, 186, 8, 0.25), 0 0 14px 3px rgba(255, 186, 8, 0.4);
+  box-shadow: 0 0 0 2px rgba(255, 186, 8, 0.22);
 }
 
 @media (prefers-reduced-motion: reduce) {

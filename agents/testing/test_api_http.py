@@ -7,6 +7,7 @@
 
 import os
 import sys
+import time
 import hashlib
 import hmac
 from pathlib import Path
@@ -548,13 +549,14 @@ def test_lead_card_format():
 
 def test_init_data_validation():
     token = "123456:TESTTOKEN"
+    now = int(time.time())
 
-    assert verify_telegram_init_data("auth_date=1700000000&user=%7B%22id%22%3A1%7D&hash=deadbeef", token) is False
+    assert verify_telegram_init_data("auth_date=1&user=%7B%22id%22%3A1%7D&hash=deadbeef", token) is False
     assert verify_telegram_init_data("foo=bar&hash=deadbeef", token) is False
     assert verify_telegram_init_data("", token) is False
 
     pairs = [
-        ("auth_date", "1700000000"),
+        ("auth_date", str(now)),
         ("query_id", "AAHdF6IQAAAAAN0XohDhr3Qrc"),
         ("user", '{"id":42,"first_name":"Test"}'),
     ]
@@ -568,7 +570,14 @@ def test_init_data_validation():
     assert verify_telegram_init_data(init_data, token) is True
     assert verify_telegram_init_data(init_data_urlencoded, token) is True
     assert verify_telegram_init_data(f"{init_data}hash={good_hash[:-3]}", token) is False
-    print("[OK] HTTP test: initData HMAC validation")
+
+    # M3 (audit): просроченный, но корректно подписанный init_data отклоняется
+    stale_pairs = [("auth_date", str(now - 48 * 3600)), ("user", '{"id":42,"first_name":"Test"}')]
+    stale_check = "\n".join(f"{k}={v}" for k, v in sorted(stale_pairs))
+    stale_hash = hmac.new(secret, stale_check.encode("utf-8"), hashlib.sha256).hexdigest()
+    stale_init = "&".join(f"{k}={v}" for k, v in sorted(stale_pairs)) + f"&hash={stale_hash}"
+    assert verify_telegram_init_data(stale_init, token) is False
+    print("[OK] HTTP test: initData HMAC validation (incl. auth_date staleness M3)")
 
 
 def test_timeout_answers_allowed():

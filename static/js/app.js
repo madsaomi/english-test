@@ -94,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         tgUser = tg.initDataUnsafe.user;
-        console.log('Telegram WebApp user detected:', tgUser);
       }
     } catch (e) {
       console.warn('Telegram WebApp initialization error:', e);

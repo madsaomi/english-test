@@ -57,6 +57,7 @@ gc_task: asyncio.Task = None
 
 GC_INTERVAL_SECONDS = 600
 GC_MAX_AGE_SECONDS = 24 * 3600
+INIT_DATA_MAX_AGE_SECONDS = 24 * 3600
 
 
 def verify_telegram_init_data(init_data: str, bot_token: str) -> bool:
@@ -65,11 +66,19 @@ def verify_telegram_init_data(init_data: str, bot_token: str) -> bool:
     secret_key = HMAC_SHA256(key='WebAppData', data=BOT_TOKEN)
     calc_hash  = HMAC_SHA256(key=secret_key, data=data_check_string)
     data_check_string = отсортированные по ключу пары 'k=v' без поля 'hash', разделённые \n.
+    M3 (audit): дополнительно проверяем свежесть — auth_date обязателен и не старше суток,
+    иначе перехваченный initData можно «переигрывать» бесконечно долго.
     """
     try:
         parsed = dict(parse_qsl(init_data))
         received_hash = parsed.pop("hash", None)
         if not received_hash:
+            return False
+        try:
+            auth_ts = int(parsed.get("auth_date", ""))
+        except (TypeError, ValueError):
+            return False
+        if abs(time.time() - auth_ts) > INIT_DATA_MAX_AGE_SECONDS:
             return False
         data_check_string = "\n".join(
             f"{k}={v}" for k, v in sorted(parsed.items())
@@ -176,21 +185,35 @@ app.add_middleware(
 
 MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 _rate_buckets: dict = defaultdict(deque)
+# M1 (audit): жёсткий потолок словаря бакетов на случай аномального пакета ключей.
+_MAX_RATE_BUCKETS = 50_000
 
 
 def _client_key(request: Request) -> str:
-    """Ключ бакета: IP (с X-Forwarded-For при наличии) + хеш User-Agent."""
-    forwarded = request.headers.get("x-forwarded-for", "")
-    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+    """Ключ бакета: реальный IP пира + хеш User-Agent.
+
+    M1 (audit): заголовок X-Forwarded-For от клиента НЕ доверяем — он подделывается,
+    что давало новый бакет на каждый запрос и обходило лимит. За прокси (Railway)
+    реальный клиентский IP раскрывает сам uvicorn с флагом --proxy-headers: он читает
+    XFF реверс-прокси и кладёт клиента в request.client. Код полагается только на это.
+    """
+    ip = request.client.host if request.client else "unknown"
     ua = request.headers.get("user-agent", "")
     ua_hash = hashlib.sha256(ua.encode("utf-8")).hexdigest()[:8]
     return f"{ip}|{ua_hash}"
 
 
 def _cleanup_rate_buckets(now: float) -> None:
-    """Периодическая чистка протухших бакетов, чтобы не течь по памяти."""
+    """Периодическая чистка протухших бакетов + жёсткий потолок размера (M1)."""
     for key in [k for k, hits in _rate_buckets.items() if not hits or hits[-1] < now - RATE_LIMIT_WINDOW_SECONDS]:
         _rate_buckets.pop(key, None)
+    if len(_rate_buckets) > _MAX_RATE_BUCKETS:
+        oldest = sorted(
+            _rate_buckets.items(),
+            key=lambda kv: kv[1][-1] if kv[1] else 0,
+        )[: len(_rate_buckets) - _MAX_RATE_BUCKETS]
+        for key, _ in oldest:
+            _rate_buckets.pop(key, None)
 
 
 if RATE_LIMIT_ENABLED:
